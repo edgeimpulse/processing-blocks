@@ -1,0 +1,57 @@
+{
+    "info": {
+        "title": "Flatten",
+        "author": "EdgeImpulse Inc.",
+        "description": "Flatten an axis into a single value, useful for slow-moving averages like temperature data, in combination with other blocks.",
+        "name": "Flatten",
+        "preferConvolution": false,
+        "cppType": "flatten"
+    },
+    "parameters": [
+        {
+            "group": "Scaling",
+            "items": [
+                {
+                    "name": "Scale axes",
+                    "value": 1,
+                    "type": "float",
+                    "help": "Multiply axes by this number",
+                    "param": "scale-axes"
+                }
+            ]
+        },
+        {
+            "group": "Method",
+            "items": [
+                {
+                    "name": "Average",
+                    "value": true,
+                    "type": "boolean",
+                    "help": "Calculates the average value for the window",
+                    "param": "average"
+                },
+                {
+                    "name": "Minimum",
+                    "value": true,
+                    "type": "boolean",
+                    "help": "Calculates the minimum value in the window",
+                    "param": "minimum"
+                },
+                {
+                    "name": "Maximum",
+                    "value": true,
+                    "type": "boolean",
+                    "help": "Calculates the maximum value in the window",
+                    "param": "maximum"
+                },
+                {
+                    "name": "Root-mean square",
+                    "value": true,
+                    "type": "boolean",
+                    "help": "Calculates the RMS value of the window",
+                    "param": "rms"
+                }
+            ]
+        }
+    ]
+}

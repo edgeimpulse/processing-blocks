@@ -1,0 +1,93 @@
+{
+    "info": {
+        "title": "Audio (MFCC)",
+        "author": "EdgeImpulse Inc.",
+        "description": "Extracts features from audio signals using Mel Frequency Cepstral Coefficents.",
+        "name": "MFCC",
+        "preferConvolution": true,
+        "convolutionColumns": "num_cepstral",
+        "convolutionKernelSize": 5,
+        "cppType": "mfcc"
+    },
+    "parameters": [
+        {
+            "group": "Mel Frequency Cepstral Coefficents",
+            "items": [
+                {
+                    "name": "Number of coefficients",
+                    "value": 13,
+                    "type": "int",
+                    "help": "Number of cepstral coefficients",
+                    "param": "num_cepstral"
+                },
+                {
+                    "name": "Frame length",
+                    "value": 0.02,
+                    "type": "float",
+                    "help": "The length of each frame in seconds",
+                    "param": "frame_length"
+                },
+                {
+                    "name": "Frame stride",
+                    "value": 0.02,
+                    "type": "float",
+                    "help": "The step between successive frames in seconds",
+                    "param": "frame_stride"
+                },
+                {
+                    "name": "Filter number",
+                    "value": 32,
+                    "type": "int",
+                    "help": "The number of filters in the filterbank",
+                    "param": "num_filters"
+                },
+                {
+                    "name": "FFT length",
+                    "value": 256,
+                    "type": "int",
+                    "help": "Number of FFT points",
+                    "param": "fft_length"
+                },
+                {
+                    "name": "Window size",
+                    "value": 101,
+                    "type": "int",
+                    "help": "The size of sliding window for local normalization",
+                    "param": "win_size"
+                },
+                {
+                    "name": "Low frequency",
+                    "value": 300,
+                    "type": "int",
+                    "help": "Lowest band edge of mel filters (in Hz)",
+                    "param": "low_frequency"
+                },
+                {
+                    "name": "High frequency",
+                    "value": 0,
+                    "type": "int",
+                    "help": "Highest band edge of mel filters (in Hz). If set to 0 this is samplerate / 2",
+                    "param": "high_frequency"
+                }
+            ]
+        },
+        {
+            "group": "Preemphasis",
+            "items": [
+                {
+                    "name": "Coefficient",
+                    "value": 0.98,
+                    "type": "float",
+                    "help": "The preemphasising coefficient. 0 equals to no filtering.",
+                    "param": "pre_cof"
+                },
+                {
+                    "name": "Shift",
+                    "value": 1,
+                    "type": "int",
+                    "param": "pre_shift"
+                }
+            ]
+        }
+    ]
+}

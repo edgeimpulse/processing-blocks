@@ -1,0 +1,84 @@
+{
+    "info": {
+        "title": "Spectral Analysis",
+        "author": "EdgeImpulse Inc.",
+        "description": "Great for analyzing repetitive motion, such as data from accelerometers. Extracts the frequency and power characteristics of a signal over time.",
+        "name": "Spectral features",
+        "preferConvolution": false,
+        "cppType": "spectral_analysis"
+    },
+    "parameters": [
+        {
+            "group": "Scaling",
+            "items": [
+                {
+                    "name": "Scale axes",
+                    "value": 1,
+                    "type": "float",
+                    "help": "Multiplies axes by this number",
+                    "param": "scale-axes"
+                }
+            ]
+        },
+        {
+            "group": "Filter",
+            "items": [
+                {
+                    "name": "Type",
+                    "value": "low",
+                    "help": "Type of filter to apply to the raw data",
+                    "type": "select",
+                    "valid": [ "low", "high", "none" ],
+                    "param": "filter-type"
+                },
+                {
+                    "name": "Cut-off frequency",
+                    "value": 3,
+                    "type": "float",
+                    "help": "Cut-off frequency in hertz",
+                    "param": "filter-cutoff"
+                },
+                {
+                    "name": "Order",
+                    "value": 6,
+                    "type": "int",
+                    "help": "The maximum delay, in samples, used in creating each output sample",
+                    "param": "filter-order"
+                }
+            ]
+        },
+        {
+            "group": "Spectral power",
+            "items": [
+                {
+                    "name": "FFT length",
+                    "value": 128,
+                    "type": "int",
+                    "help": "Number of FFT points",
+                    "param": "fft-length"
+                },
+                {
+                    "name": "No. of peaks",
+                    "value": 3,
+                    "type": "int",
+                    "help": "Number of spectral power peaks",
+                    "param": "spectral-peaks-count"
+                },
+                {
+                    "name": "Peaks threshold",
+                    "value": 0.1,
+                    "type": "float",
+                    "help": "Minimum (normalized) threshold for a peak, this eliminates peaks that are very close",
+                    "param": "spectral-peaks-threshold"
+                },
+                {
+                    "name": "Power edges",
+                    "value": "0.1, 0.5, 1.0, 2.0, 5.0",
+                    "type": "string",
+                    "help": "Splits the spectral density in various buckets",
+                    "param": "spectral-power-edges"
+                }
+            ]
+        }
+    ]
+}

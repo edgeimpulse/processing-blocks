@@ -1,0 +1,26 @@
+{
+    "info": {
+        "title": "Raw Data",
+        "author": "EdgeImpulse Inc.",
+        "description": "Use data without pre-processing. Useful if you want to use deep learning to learn features.",
+        "name": "Raw data",
+        "preferConvolution": true,
+        "convolutionColumns": "axes",
+        "convolutionKernelSize": 7,
+        "cppType": "raw"
+    },
+    "parameters": [
+        {
+            "group": "Scaling",
+            "items": [
+                {
+                    "name": "Scale axes",
+                    "value": 1,
+                    "type": "float",
+                    "help": "Multiplies axes by this number",
+                    "param": "scale-axes"
+                }
+            ]
+        }
+    ]
+}
