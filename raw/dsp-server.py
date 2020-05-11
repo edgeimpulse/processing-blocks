@@ -143,6 +143,8 @@ class Handler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(json.dumps({ 'success': False, 'error': str(e) }).encode())
 
+    def log_message(self, format, *args):
+        return
 
 class ThreadingSimpleServer(ThreadingMixIn, HTTPServer):
     pass
