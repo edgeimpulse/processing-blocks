@@ -26,11 +26,7 @@ def generate_features(draw_graphs, raw_data, axes, sampling_freq,
     graphs = []
 
     for ax in range(0, len(axes)):
-        signal = []
-        for ix in range(0, raw_data.shape[0]):
-            signal.append(raw_data[ix][ax])
-
-        signal = np.array(signal)
+        signal = raw_data[:,ax]
 
         # Example of pre-emphasizing.
         signal_preemphasized = speechpy.processing.preemphasis(signal, cof=pre_cof, shift=pre_shift)

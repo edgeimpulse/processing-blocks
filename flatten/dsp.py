@@ -10,9 +10,7 @@ def generate_features(draw_graphs, raw_data, axes, sampling_freq, scale_axes, av
     labels = []
 
     for ax in range(0, len(axes)):
-        X = []
-        for ix in range(0, raw_data.shape[0]):
-            X.append(raw_data[ix][ax])
+        X = raw_data[:,ax]
 
         if (average):
             features.append(float(np.average(X)))

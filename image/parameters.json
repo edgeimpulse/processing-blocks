@@ -1,0 +1,25 @@
+{
+    "info": {
+        "title": "Image",
+        "author": "EdgeImpulse Inc.",
+        "description": "Preprocess and normalize image data, and optionally reduce the color depth.",
+        "name": "Image",
+        "cppType": "image",
+        "visualization": "dimensionalityReduction"
+    },
+    "parameters": [
+        {
+            "group": "Image",
+            "items": [
+                {
+                    "name": "Color depth",
+                    "value": "RGB",
+                    "help": "Color depth to use",
+                    "type": "select",
+                    "valid": [ "RGB", "Grayscale" ],
+                    "param": "channels"
+                }
+            ]
+        }
+    ]
+}
