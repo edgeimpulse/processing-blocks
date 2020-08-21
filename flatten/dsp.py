@@ -1,8 +1,10 @@
 import argparse, sys
 import json
 import numpy as np
+from scipy.stats import skew
+from scipy.stats import kurtosis as calculateKurtosis
 
-def generate_features(draw_graphs, raw_data, axes, sampling_freq, scale_axes, average, minimum, maximum, rms):
+def generate_features(draw_graphs, raw_data, axes, sampling_freq, scale_axes, average, minimum, maximum, rms, stdev, skewness, kurtosis):
     raw_data = raw_data * scale_axes
     raw_data = raw_data.reshape(int(len(raw_data) / len(axes)), len(axes))
 
@@ -24,10 +26,22 @@ def generate_features(draw_graphs, raw_data, axes, sampling_freq, scale_axes, av
         if (rms):
             features.append(float(np.sqrt(np.mean(np.square(X)))))
 
+        if (stdev):
+            features.append(float(np.std(X)))
+
+        if (skewness):
+            features.append(float(skew(X)))
+
+        if (kurtosis):
+            features.append(float(calculateKurtosis(X)))
+
     if (average): labels.append('Average')
     if (minimum): labels.append('Minimum')
     if (maximum): labels.append('Maximum')
     if (rms): labels.append('RMS')
+    if (stdev): labels.append('Stdev')
+    if (skewness): labels.append('Skewness')
+    if (kurtosis): labels.append('Kurtosis')
 
     return { 'features': features, 'graphs': [], 'labels': labels }
 
@@ -49,6 +63,12 @@ if __name__ == "__main__":
                         help='calculate maximum (default: true)')
     parser.add_argument('--rms', type=lambda x: (str(x).lower() in ['true','1', 'yes']), default=True,
                         help='calculate rms (default: true)')
+    parser.add_argument('--stdev', type=lambda x: (str(x).lower() in ['true','1', 'yes']), default=True,
+                        help='calculate stdev (default: true)')
+    parser.add_argument('--skewness', type=lambda x: (str(x).lower() in ['true','1', 'yes']), default=True,
+                        help='calculate skewness (default: true)')
+    parser.add_argument('--kurtosis', type=lambda x: (str(x).lower() in ['true','1', 'yes']), default=True,
+                        help='calculate kurtosis (default: true)')
     parser.add_argument('--draw-graphs', type=lambda x: (str(x).lower() in ['true','1', 'yes']), required=True,
                         help='Whether to draw graphs')
 
@@ -59,7 +79,7 @@ if __name__ == "__main__":
 
     try:
         processed = generate_features(args.draw_graphs, raw_features, raw_axes, args.frequency, args.scale_axes,
-            args.average, args.minimum, args.maximum, args.rms)
+            args.average, args.minimum, args.maximum, args.rms, args.stdev, args.skewness, args.kurtosis)
 
         print('Begin output')
         print(json.dumps(processed))

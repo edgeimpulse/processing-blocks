@@ -50,6 +50,27 @@
                     "type": "boolean",
                     "help": "Calculates the RMS value of the window",
                     "param": "rms"
+                },
+                {
+                    "name": "Standard deviation",
+                    "value": true,
+                    "type": "boolean",
+                    "help": "Calculates the standard deviation of the window",
+                    "param": "stdev"
+                },
+                {
+                    "name": "Skewness",
+                    "value": true,
+                    "type": "boolean",
+                    "help": "Calculates the skewness of the window",
+                    "param": "skewness"
+                },
+                {
+                    "name": "Kurtosis",
+                    "value": true,
+                    "type": "boolean",
+                    "help": "Calculates the kurtosis of the window",
+                    "param": "kurtosis"
                 }
             ]
         }
