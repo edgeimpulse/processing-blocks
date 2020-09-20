@@ -7,7 +7,11 @@ def generate_features(draw_graphs, raw_data, axes, sampling_freq, scale_axes):
     if (scale_axes == 1):
         return { 'features': raw_data, 'graphs': [] }
 
-    return { 'features': raw_data * scale_axes, 'graphs': [] }
+    return {
+        'features': raw_data * scale_axes,
+        'graphs': [],
+        'output_config': { 'type': 'flat', 'shape': { 'width': len(raw_data) } }
+    }
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Returns raw data')

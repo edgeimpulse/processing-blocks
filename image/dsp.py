@@ -7,48 +7,58 @@ import io, base64
 from PIL import Image
 
 def generate_features(draw_graphs, raw_data, axes, sampling_freq, channels):
-    graphs = []
 
-    raw_data = raw_data.astype(dtype=np.uint32)
+    graphs = []
+    pixels = []
     width = raw_data[0]
     height = raw_data[1]
-
-    pixels = []
-    for x in np.nditer(raw_data[2:]):
-        r = x >> 16 & 0xff
-        g = x >> 8 & 0xff
-        b = x & 0xff
-
-        pixels.append((b << 16) + (g << 8) + (r))
-
-    im = Image.fromarray(np.array(pixels, dtype=np.uint32).reshape(height, width, 1).view(dtype=np.uint8), mode='RGBA')
+    raw_data = raw_data[2:].astype(dtype=np.uint32).view(dtype=np.uint8)
+    bs = raw_data.tobytes()
+    ix = 0
 
     if channels == 'Grayscale':
-        im = im.convert(mode='L')
+        while ix < raw_data.shape[0]:
+            # ITU-R 601-2 luma transform
+            # see: https://pillow.readthedocs.io/en/stable/reference/Image.html#PIL.Image.Image.convert
+            pixels.append((0.299 / 255.0) * float(bs[ix + 2]) + (0.587 / 255.0) * float(bs[ix + 1]) + (0.114 / 255.0) * float(bs[ix]))
+            ix = ix + 4
     else:
-        im = im.convert(mode='RGB')
+        while ix < raw_data.shape[0]:
+            pixels.append(float(bs[ix + 2]) / 255.0)
+            pixels.append(float(bs[ix + 1]) / 255.0)
+            pixels.append(float(bs[ix]) / 255.0)
+            ix = ix + 4
 
-    buf = io.BytesIO()
-    im.save(buf, format='PNG')
+    if draw_graphs:
+        im = None
+        if channels == 'Grayscale':
+            im = Image.fromarray(np.uint8((np.array(pixels) * 255.0).reshape(height, width)), mode='L')
+        else:
+            im = Image.fromarray(np.uint8((np.array(pixels) * 255.0).reshape(height, width, 3)), mode='RGB')
+        im = im.convert(mode='RGBA')
+        buf = io.BytesIO()
+        im.save(buf, format='PNG')
 
-    buf.seek(0)
-    image = (base64.b64encode(buf.getvalue()).decode('ascii'))
+        buf.seek(0)
+        image = (base64.b64encode(buf.getvalue()).decode('ascii'))
 
-    buf.close()
+        buf.close()
 
-    graphs.append({
-        'name': 'Image',
-        'image': image,
-        'imageMimeType': 'image/png',
-        'type': 'image'
-    })
+        graphs.append({
+            'name': 'Image',
+            'image': image,
+            'imageMimeType': 'image/png',
+            'type': 'image'
+        })
+        
+    num_channels = 1
+    if channels == 'RGB':
+        num_channels = 3
 
-    features = np.asarray(im) / 255.0
-    if channels == 'Grayscale':
-        features = features.reshape(width * height)
-    else:
-        features = features.reshape(width * height * 3)
-    return { 'features': features.tolist(), 'graphs': graphs }
+    image_config = { 'width': int(width), 'height': int(height), 'channels': num_channels }
+    output_config = { 'type': 'image', 'shape': image_config }
+
+    return { 'features': pixels, 'graphs': graphs, 'output_config': output_config }
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Returns raw data')

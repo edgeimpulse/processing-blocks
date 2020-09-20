@@ -67,6 +67,7 @@ def batch_req(self, fn, body):
     total = 0
     features = []
     labels = []
+    output_config = None
 
     for example in body['features']:
         args = dict(base_args)
@@ -80,10 +81,17 @@ def batch_req(self, fn, body):
         if total == 0:
             if ('labels' in f):
                 labels = f['labels']
+            if ('output_config' in f):
+                output_config = f['output_config']
 
         total += 1
 
-    body = json.dumps({ 'success': True, 'features': features, 'labels': labels })
+    body = json.dumps({
+        'success': True,
+        'features': features,
+        'labels': labels,
+        'output_config': output_config
+    })
 
     self.send_response(200)
     self.send_header('Content-Type', 'application/json')

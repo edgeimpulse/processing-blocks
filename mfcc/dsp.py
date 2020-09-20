@@ -65,7 +65,17 @@ def generate_features(draw_graphs, raw_data, axes, sampling_freq,
                 'type': 'image'
             })
 
-    return { 'features': features.tolist(), 'graphs': graphs }
+    return {
+        'features': features.tolist(),
+        'graphs': graphs,
+        'output_config': {
+            'type': 'spectrogram',
+            'shape': {
+                'width': len(features) / num_cepstral,
+                'height': num_cepstral
+            }
+        }
+    }
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='MFCC script for audio data')

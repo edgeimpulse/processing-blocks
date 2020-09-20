@@ -1,5 +1,5 @@
 import argparse
-import json, sys
+import json, sys, math
 import numpy as np
 from scipy import signal
 from scipy.fftpack import fft, fftfreq, fftshift
@@ -116,6 +116,9 @@ def generate_features(draw_graphs, raw_data, axes, sampling_freq, scale_axes, fi
         if (filter_order < 1 or filter_order > 9):
             raise Exception('Filter order needs to be between 2 and 8')
 
+    if (not math.log2(fft_length).is_integer()):
+        raise Exception('FFT length must be a power of 2')
+
     # reshape first
     raw_data = raw_data.reshape(int(len(raw_data) / len(axes)), len(axes))
 
@@ -211,7 +214,12 @@ def generate_features(draw_graphs, raw_data, axes, sampling_freq, scale_axes, fi
     for k in range(0, len(spectral_power_edges) - 1):
         labels.append('Spectral Power ' + str(spectral_power_edges[k]) + ' - ' + str(spectral_power_edges[k + 1]))
 
-    return { 'features': np.array(features).tolist(), 'graphs': graphs, 'labels': labels }
+    return {
+        'features': np.array(features).tolist(),
+        'graphs': graphs,
+        'labels': labels,
+        'output_config': { 'type': 'flat', 'shape': { 'width': len(features) } }
+    }
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Digital Signal Processing script for accelerometer data')

@@ -43,7 +43,12 @@ def generate_features(draw_graphs, raw_data, axes, sampling_freq, scale_axes, av
     if (skewness): labels.append('Skewness')
     if (kurtosis): labels.append('Kurtosis')
 
-    return { 'features': features, 'graphs': [], 'labels': labels }
+    return {
+        'features': features,
+        'graphs': [],
+        'labels': labels,
+        'output_config': { 'type': 'flat', 'shape': { 'width': len(features) } }
+    }
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Flatten script for raw data')
