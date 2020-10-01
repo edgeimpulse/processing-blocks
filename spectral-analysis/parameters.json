@@ -5,7 +5,8 @@
         "description": "Great for analyzing repetitive motion, such as data from accelerometers. Extracts the frequency and power characteristics of a signal over time.",
         "name": "Spectral features",
         "preferConvolution": false,
-        "cppType": "spectral_analysis"
+        "cppType": "spectral_analysis",
+        "experimental": false
     },
     "parameters": [
         {

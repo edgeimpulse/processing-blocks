@@ -1,37 +1,31 @@
 {
+    "version": 1,
     "info": {
-        "title": "Audio (MFCC)",
+        "title": "Audio (MFE)",
         "author": "EdgeImpulse Inc.",
-        "description": "Extracts features from audio signals using Mel Frequency Cepstral Coefficents, great for human voice.",
-        "name": "MFCC",
+        "description": "Extracts a spectrogram from audio signals using Mel-filterbank energy features, great for non-voice audio.",
+        "name": "MFE",
         "preferConvolution": true,
-        "convolutionColumns": "num_cepstral",
+        "convolutionColumns": "num_filters",
         "convolutionKernelSize": 5,
-        "cppType": "mfcc",
+        "cppType": "mfe",
         "visualization": "dimensionalityReduction",
-        "experimental": false
+        "experimental": true
     },
     "parameters": [
         {
-            "group": "Mel Frequency Cepstral Coefficents",
+            "group": "Mel-filterbank energy features",
             "items": [
                 {
-                    "name": "Number of coefficients",
-                    "value": 13,
-                    "type": "int",
-                    "help": "Number of cepstral coefficients",
-                    "param": "num_cepstral"
-                },
-                {
                     "name": "Frame length",
-                    "value": 0.02,
+                    "value": 0.04,
                     "type": "float",
                     "help": "The length of each frame in seconds",
                     "param": "frame_length"
                 },
                 {
                     "name": "Frame stride",
-                    "value": 0.02,
+                    "value": 0.04,
                     "type": "float",
                     "help": "The step between successive frames in seconds",
                     "param": "frame_stride"
@@ -51,13 +45,6 @@
                     "param": "fft_length"
                 },
                 {
-                    "name": "Window size",
-                    "value": 101,
-                    "type": "int",
-                    "help": "The size of sliding window for local normalization",
-                    "param": "win_size"
-                },
-                {
                     "name": "Low frequency",
                     "value": 300,
                     "type": "int",
@@ -70,24 +57,13 @@
                     "type": "int",
                     "help": "Highest band edge of mel filters (in Hz). If set to 0 this is samplerate / 2",
                     "param": "high_frequency"
-                }
-            ]
-        },
-        {
-            "group": "Preemphasis",
-            "items": [
-                {
-                    "name": "Coefficient",
-                    "value": 0.98,
-                    "type": "float",
-                    "help": "The preemphasising coefficient. 0 equals to no filtering.",
-                    "param": "pre_cof"
                 },
                 {
-                    "name": "Shift",
-                    "value": 1,
+                    "name": "Window size",
+                    "value": 101,
                     "type": "int",
-                    "param": "pre_shift"
+                    "help": "The size of sliding window for local normalization",
+                    "param": "win_size"
                 }
             ]
         }

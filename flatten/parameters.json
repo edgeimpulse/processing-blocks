@@ -5,7 +5,8 @@
         "description": "Flatten an axis into a single value, useful for slow-moving averages like temperature data, in combination with other blocks.",
         "name": "Flatten",
         "preferConvolution": false,
-        "cppType": "flatten"
+        "cppType": "flatten",
+        "experimental": false
     },
     "parameters": [
         {

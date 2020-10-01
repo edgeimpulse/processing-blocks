@@ -8,15 +8,16 @@ import io, base64
 import matplotlib.pyplot as plt
 import time
 import matplotlib
+from scipy import signal as sn
+import speechpy
 
 matplotlib.use('Svg')
 
 def generate_features(draw_graphs, raw_data, axes, sampling_freq,
                       frame_length, frame_stride, num_filters, fft_length,
-                      num_cepstral, win_size,
-                      low_frequency, high_frequency,
-                      pre_cof, pre_shift):
+                      low_frequency, high_frequency, win_size):
     fs = sampling_freq
+    low_frequency = None if low_frequency == 0 else low_frequency
     high_frequency = None if high_frequency == 0 else high_frequency
 
     # reshape first
@@ -25,29 +26,34 @@ def generate_features(draw_graphs, raw_data, axes, sampling_freq,
     features = []
     graphs = []
 
+    width = 0
+    height = 0
+
     for ax in range(0, len(axes)):
         signal = raw_data[:,ax]
 
-        # Example of pre-emphasizing.
-        signal_preemphasized = speechpy.processing.preemphasis(signal, cof=pre_cof, shift=pre_shift)
-
         ############# Extract MFCC features #############
-        mfcc = speechpy.feature.mfcc(signal_preemphasized, sampling_frequency=fs, frame_length=frame_length,
-                    frame_stride=frame_stride, num_filters=num_filters, fft_length=fft_length,
-                    num_cepstral=num_cepstral,
-                    low_frequency=low_frequency, high_frequency=high_frequency)
-        mfcc_cmvn = speechpy.processing.cmvnw(mfcc, win_size=win_size, variance_normalization=True)
+        mfe, energy = speechpy.feature.mfe(signal, sampling_frequency=fs, frame_length=frame_length,
+                                           frame_stride=frame_stride, num_filters=num_filters, fft_length=fft_length,
+                                           low_frequency=low_frequency, high_frequency=high_frequency)
 
-        flattened = mfcc_cmvn.flatten()
+        mfe_cmvn = speechpy.processing.cmvnw(mfe, win_size=win_size, variance_normalization=False)
+
+        mfe_cmvn = (mfe_cmvn - np.min(mfe_cmvn)) / (np.max(mfe_cmvn) - np.min(mfe_cmvn))
+
+        flattened = mfe_cmvn.flatten()
         features = np.concatenate((features, flattened))
+
+        width = np.shape(mfe)[0]
+        height = np.shape(mfe)[1]
 
         if draw_graphs:
             # make visualization too
             fig, ax = plt.subplots()
             fig.set_size_inches(18.5, 20.5)
             ax.set_axis_off()
-            mfcc_data= np.swapaxes(mfcc, 0 ,1)
-            cax = ax.imshow(mfcc_data, interpolation='nearest', cmap=cm.coolwarm, origin='lower')
+            mfe_data = np.swapaxes(mfe_cmvn, 0, 1)
+            cax = ax.imshow(mfe_data, interpolation='nearest', cmap=cm.coolwarm, origin='lower')
 
             buf = io.BytesIO()
 
@@ -59,7 +65,7 @@ def generate_features(draw_graphs, raw_data, axes, sampling_freq,
             buf.close()
 
             graphs.append({
-                'name': 'Cepstral Coefficents',
+                'name': 'Spectrogram',
                 'image': image,
                 'imageMimeType': 'image/svg+xml',
                 'type': 'image'
@@ -71,8 +77,8 @@ def generate_features(draw_graphs, raw_data, axes, sampling_freq,
         'output_config': {
             'type': 'spectrogram',
             'shape': {
-                'width': len(features) / num_cepstral,
-                'height': num_cepstral
+                'width': width,
+                'height': height
             }
         }
     }
@@ -95,18 +101,12 @@ if __name__ == "__main__":
                         help='The number of filters in the filterbank')
     parser.add_argument('--fft_length', type=int, default=256,
                         help='Number of FFT points')
-    parser.add_argument('--num_cepstral', type=int, default=13,
-                        help='Number of Cepstral coefficients')
     parser.add_argument('--win_size', type=int, default=101,
                         help='The size of sliding window for local normalization')
     parser.add_argument('--low_frequency', type=int, default=0,
                         help='Lowest band edge of mel filters')
     parser.add_argument('--high_frequency', type=int, default=0,
                         help='Highest band edge of mel filters. If set to 0 this is equal to samplerate / 2.')
-    parser.add_argument('--pre_cof', type=float, default=0.98,
-                        help='The preemphasising coefficient. 0 equals to no filtering')
-    parser.add_argument('--pre_shift', type=int, default=1,
-                        help='')
 
     args = parser.parse_args()
 
@@ -115,8 +115,8 @@ if __name__ == "__main__":
 
     try:
         processed = generate_features(args.draw_graphs, raw_features, raw_axes, args.frequency,
-            args.frame_length, args.frame_stride, args.num_filters, args.fft_length, args.num_cepstral,
-            args.win_size, args.low_frequency, args.high_frequency, args.pre_cof, args.pre_shift)
+            args.frame_length, args.frame_stride, args.num_filters, args.fft_length,
+             args.low_frequency, args.high_frequency, args.win_size)
 
         print('Begin output')
         print(json.dumps(processed))
