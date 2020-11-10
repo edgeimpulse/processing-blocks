@@ -39,7 +39,10 @@ def generate_features(draw_graphs, raw_data, axes, sampling_freq,
 
         mfe_cmvn = speechpy.processing.cmvnw(mfe, win_size=win_size, variance_normalization=False)
 
-        mfe_cmvn = (mfe_cmvn - np.min(mfe_cmvn)) / (np.max(mfe_cmvn) - np.min(mfe_cmvn))
+        if (np.min(mfe_cmvn) != 0 and np.max(mfe_cmvn) != 0):
+            mfe_cmvn = (mfe_cmvn - np.min(mfe_cmvn)) / (np.max(mfe_cmvn) - np.min(mfe_cmvn))
+
+        mfe_cmvn[np.isnan(mfe_cmvn)] = 0
 
         flattened = mfe_cmvn.flatten()
         features = np.concatenate((features, flattened))

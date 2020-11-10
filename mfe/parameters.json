@@ -18,14 +18,14 @@
             "items": [
                 {
                     "name": "Frame length",
-                    "value": 0.04,
+                    "value": 0.02,
                     "type": "float",
                     "help": "The length of each frame in seconds",
                     "param": "frame_length"
                 },
                 {
                     "name": "Frame stride",
-                    "value": 0.04,
+                    "value": 0.01,
                     "type": "float",
                     "help": "The step between successive frames in seconds",
                     "param": "frame_stride"
