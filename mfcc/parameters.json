@@ -2,7 +2,7 @@
     "info": {
         "title": "Audio (MFCC)",
         "author": "EdgeImpulse Inc.",
-        "description": "Extracts features from audio signals using Mel Frequency Cepstral Coefficents, great for human voice.",
+        "description": "Extracts features from audio signals using Mel Frequency Cepstral Coefficients, great for human voice.",
         "name": "MFCC",
         "preferConvolution": true,
         "convolutionColumns": "num_cepstral",
@@ -13,7 +13,7 @@
     },
     "parameters": [
         {
-            "group": "Mel Frequency Cepstral Coefficents",
+            "group": "Mel Frequency Cepstral Coefficients",
             "items": [
                 {
                     "name": "Number of coefficients",

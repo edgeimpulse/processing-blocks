@@ -1,0 +1,55 @@
+{
+    "version": 1,
+    "info": {
+        "title": "Spectrogram",
+        "author": "EdgeImpulse Inc.",
+        "description": "Extracts a spectrogram from audio or sensor data, great for non-voice audio or data with continuous frequencies.",
+        "name": "Spectrogram",
+        "preferConvolution": true,
+        "convolutionColumns": "fft_length",
+        "convolutionKernelSize": 5,
+        "cppType": "spectrogram",
+        "visualization": "dimensionalityReduction",
+        "experimental": true
+    },
+    "parameters": [
+        {
+            "group": "Spectrogram",
+            "items": [
+                {
+                    "name": "Frame length",
+                    "value": 0.02,
+                    "type": "float",
+                    "help": "The length of each frame in seconds",
+                    "param": "frame_length"
+                },
+                {
+                    "name": "Frame stride",
+                    "value": 0.01,
+                    "type": "float",
+                    "help": "The step between successive frames in seconds",
+                    "param": "frame_stride"
+                },
+                {
+                    "name": "Frequency bands",
+                    "value": 128,
+                    "type": "int",
+                    "help": "Number of frequency bands. Choose a power of two (e.g. 64, 128, 256) for optimal performance on device.",
+                    "param": "fft_length"
+                }
+            ]
+        },
+        {
+            "group": "Graph options",
+            "items": [
+                {
+                    "name": "Show axes",
+                    "value": true,
+                    "type": "boolean",
+                    "help": "Show frequency / time axes in the graphs",
+                    "param": "show_axes"
+                }
+            ]
+        }
+    ]
+}

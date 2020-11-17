@@ -8,16 +8,15 @@ import io, base64
 import matplotlib.pyplot as plt
 import time
 import matplotlib
+from scipy import signal as sn
+import speechpy, math
 
 matplotlib.use('Svg')
 
 def generate_features(draw_graphs, raw_data, axes, sampling_freq,
-                      frame_length, frame_stride, num_filters, fft_length,
-                      num_cepstral, win_size,
-                      low_frequency, high_frequency,
-                      pre_cof, pre_shift):
+                      frame_length, frame_stride, fft_length,
+                      show_axes):
     fs = sampling_freq
-    high_frequency = None if high_frequency == 0 else high_frequency
 
     # reshape first
     raw_data = raw_data.reshape(int(len(raw_data) / len(axes)), len(axes))
@@ -25,29 +24,55 @@ def generate_features(draw_graphs, raw_data, axes, sampling_freq,
     features = []
     graphs = []
 
+    width = 0
+    height = 0
+
     for ax in range(0, len(axes)):
         signal = raw_data[:,ax]
 
-        # Example of pre-emphasizing.
-        signal_preemphasized = speechpy.processing.preemphasis(signal, cof=pre_cof, shift=pre_shift)
+        sampling_frequency = fs
 
-        ############# Extract MFCC features #############
-        mfcc = speechpy.feature.mfcc(signal_preemphasized, sampling_frequency=fs, frame_length=frame_length,
-                    frame_stride=frame_stride, num_filters=num_filters, fft_length=fft_length,
-                    num_cepstral=num_cepstral,
-                    low_frequency=low_frequency, high_frequency=high_frequency)
-        mfcc_cmvn = speechpy.processing.cmvnw(mfcc, win_size=win_size, variance_normalization=True)
+        s = np.array(signal).astype(float)
+        frames = speechpy.processing.stack_frames(
+            s,
+            sampling_frequency=sampling_frequency,
+            frame_length=frame_length,
+            frame_stride=frame_stride,
+            filter=lambda x: np.ones(
+                (x,
+                    )),
+            zero_padding=False)
 
-        flattened = mfcc_cmvn.flatten()
+        power_spectrum = speechpy.processing.power_spectrum(frames, fft_length)
+
+        power_spectrum = (power_spectrum - np.min(power_spectrum)) / (np.max(power_spectrum) - np.min(power_spectrum))
+
+        power_spectrum[np.isnan(power_spectrum)] = 0
+
+        flattened = power_spectrum.flatten()
         features = np.concatenate((features, flattened))
+
+        width = np.shape(power_spectrum)[0]
+        height = np.shape(power_spectrum)[1]
 
         if draw_graphs:
             # make visualization too
+            power_spectrum = np.swapaxes(power_spectrum, 0, 1)
             fig, ax = plt.subplots()
-            fig.set_size_inches(18.5, 20.5)
-            ax.set_axis_off()
-            mfcc_data= np.swapaxes(mfcc, 0 ,1)
-            cax = ax.imshow(mfcc_data, interpolation='nearest', cmap=cm.coolwarm, origin='lower')
+
+            if not show_axes:
+                cax = ax.imshow(power_spectrum, interpolation='nearest', cmap=cm.coolwarm, origin='lower')
+                fig.set_size_inches(18.5, 20.5)
+                ax.set_axis_off()
+            else:
+                time_len = (width * frame_stride) + frame_length
+                times = np.linspace(0, time_len, 10)
+                freqs = np.linspace(0, sampling_freq / 2, 15)
+                plt.ylabel('Frequency [Hz]')
+                plt.xlabel('Time [sec]')
+                cax = ax.imshow(power_spectrum, interpolation='nearest', cmap=cm.coolwarm, origin='lower')
+                plt.xticks(np.linspace(0, width, 10), [ round(x, 2) for x in times ])
+                plt.yticks(np.linspace(0, height, 15), [ math.ceil(x) for x in freqs ])
 
             buf = io.BytesIO()
 
@@ -59,7 +84,7 @@ def generate_features(draw_graphs, raw_data, axes, sampling_freq,
             buf.close()
 
             graphs.append({
-                'name': 'Cepstral Coefficients',
+                'name': 'Spectrogram',
                 'image': image,
                 'imageMimeType': 'image/svg+xml',
                 'type': 'image'
@@ -71,14 +96,14 @@ def generate_features(draw_graphs, raw_data, axes, sampling_freq,
         'output_config': {
             'type': 'spectrogram',
             'shape': {
-                'width': len(features) / num_cepstral,
-                'height': num_cepstral
+                'width': width,
+                'height': height
             }
         }
     }
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='MFCC script for audio data')
+    parser = argparse.ArgumentParser(description='Spectrogram from sensor data')
     parser.add_argument('--features', type=str, required=True,
                         help='Axis data as a flattened WAV file (pass as comma separated values)')
     parser.add_argument('--axes', type=str, required=True,
@@ -91,22 +116,10 @@ if __name__ == "__main__":
                         help='The length of each frame in seconds')
     parser.add_argument('--frame_stride', type=float, default=0.02,
                         help='The step between successive frames in seconds')
-    parser.add_argument('--num_filters', type=int, default=32,
-                        help='The number of filters in the filterbank')
     parser.add_argument('--fft_length', type=int, default=256,
                         help='Number of FFT points')
-    parser.add_argument('--num_cepstral', type=int, default=13,
-                        help='Number of Cepstral coefficients')
-    parser.add_argument('--win_size', type=int, default=101,
-                        help='The size of sliding window for local normalization')
-    parser.add_argument('--low_frequency', type=int, default=0,
-                        help='Lowest band edge of mel filters')
-    parser.add_argument('--high_frequency', type=int, default=0,
-                        help='Highest band edge of mel filters. If set to 0 this is equal to samplerate / 2.')
-    parser.add_argument('--pre_cof', type=float, default=0.98,
-                        help='The preemphasising coefficient. 0 equals to no filtering')
-    parser.add_argument('--pre_shift', type=int, default=1,
-                        help='')
+    parser.add_argument('--show-axes', type=lambda x: (str(x).lower() in ['true','1', 'yes']), required=True,
+                        help='Whether to show axes on the graph')
 
     args = parser.parse_args()
 
@@ -115,8 +128,7 @@ if __name__ == "__main__":
 
     try:
         processed = generate_features(args.draw_graphs, raw_features, raw_axes, args.frequency,
-            args.frame_length, args.frame_stride, args.num_filters, args.fft_length, args.num_cepstral,
-            args.win_size, args.low_frequency, args.high_frequency, args.pre_cof, args.pre_shift)
+            args.frame_length, args.frame_stride, args.num_filters, args.fft_length)
 
         print('Begin output')
         print(json.dumps(processed))
