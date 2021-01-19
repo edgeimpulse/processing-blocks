@@ -56,7 +56,8 @@
                     "value": 0,
                     "type": "int",
                     "help": "Highest band edge of mel filters (in Hz). If set to 0 this is samplerate / 2",
-                    "param": "high_frequency"
+                    "param": "high_frequency",
+                    "optional": true
                 },
                 {
                     "name": "Window size",
