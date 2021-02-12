@@ -9,7 +9,8 @@
         "convolutionKernelSize": 5,
         "cppType": "mfcc",
         "visualization": "dimensionalityReduction",
-        "experimental": false
+        "experimental": false,
+        "latestImplementationVersion": 2
     },
     "parameters": [
         {

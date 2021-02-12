@@ -107,9 +107,12 @@ def unpack_raw_sensor_data_file(data):
     return sampling_freq, x, y, z, time
 
 # You can test this function out visually in visualizer.py
-def generate_features(draw_graphs, raw_data, axes, sampling_freq, scale_axes, filter_type,
-                      filter_cutoff, filter_order, fft_length, spectral_peaks_count,
+def generate_features(implementation_version, draw_graphs, raw_data, axes, sampling_freq, scale_axes,
+                      filter_type, filter_cutoff, filter_order, fft_length, spectral_peaks_count,
                       spectral_peaks_threshold, spectral_power_edges):
+    if (implementation_version != 1):
+        raise Exception('implementation_version should be 1')
+
     if (filter_type == 'low' or filter_type == 'high'):
         if (filter_order % 2 != 0):
             raise Exception('Filter order needs to be even (2, 4, 6, 8)')
@@ -255,7 +258,7 @@ if __name__ == "__main__":
     raw_axes = args.axes.split(',')
 
     try:
-        processed = generate_features(args.draw_graphs, raw_features, raw_axes, args.frequency, args.scale_axes, args.filter_type, args.filter_cutoff,
+        processed = generate_features(1, args.draw_graphs, raw_features, raw_axes, args.frequency, args.scale_axes, args.filter_type, args.filter_cutoff,
             args.filter_order, args.fft_length, args.spectral_peaks_count, args.spectral_peaks_threshold, args.spectral_power_edges)
 
         print('Begin output')

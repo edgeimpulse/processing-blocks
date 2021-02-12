@@ -1,7 +1,6 @@
 import argparse
 import json
 import numpy as np
-import speechpy
 import os, sys
 from matplotlib import cm
 import io, base64
@@ -9,13 +8,27 @@ import matplotlib.pyplot as plt
 import time
 import matplotlib
 
+# Load our SpeechPy fork
+MODULE_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'third_party', 'speechpy', '__init__.py')
+MODULE_NAME = 'speechpy'
+import importlib
+import sys
+spec = importlib.util.spec_from_file_location(MODULE_NAME, MODULE_PATH)
+module = importlib.util.module_from_spec(spec)
+sys.modules[spec.name] = module
+spec.loader.exec_module(module)
+import speechpy
+
 matplotlib.use('Svg')
 
-def generate_features(draw_graphs, raw_data, axes, sampling_freq,
+def generate_features(implementation_version, draw_graphs, raw_data, axes, sampling_freq,
                       frame_length, frame_stride, num_filters, fft_length,
                       num_cepstral, win_size,
                       low_frequency, high_frequency,
                       pre_cof, pre_shift):
+    if (implementation_version != 1 and implementation_version != 2):
+        raise Exception('implementation_version should be 1 or 2')
+
     fs = sampling_freq
     high_frequency = None if high_frequency == 0 else high_frequency
 
@@ -32,7 +45,8 @@ def generate_features(draw_graphs, raw_data, axes, sampling_freq,
         signal_preemphasized = speechpy.processing.preemphasis(signal, cof=pre_cof, shift=pre_shift)
 
         ############# Extract MFCC features #############
-        mfcc = speechpy.feature.mfcc(signal_preemphasized, sampling_frequency=fs, frame_length=frame_length,
+        mfcc = speechpy.feature.mfcc(signal_preemphasized, sampling_frequency=fs, implementation_version=implementation_version,
+                    frame_length=frame_length,
                     frame_stride=frame_stride, num_filters=num_filters, fft_length=fft_length,
                     num_cepstral=num_cepstral,
                     low_frequency=low_frequency, high_frequency=high_frequency)
@@ -114,7 +128,7 @@ if __name__ == "__main__":
     raw_axes = args.axes.split(',')
 
     try:
-        processed = generate_features(args.draw_graphs, raw_features, raw_axes, args.frequency,
+        processed = generate_features(2, args.draw_graphs, raw_features, raw_axes, args.frequency,
             args.frame_length, args.frame_stride, args.num_filters, args.fft_length, args.num_cepstral,
             args.win_size, args.low_frequency, args.high_frequency, args.pre_cof, args.pre_shift)
 

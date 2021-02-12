@@ -4,7 +4,11 @@ import numpy as np
 from scipy.stats import skew
 from scipy.stats import kurtosis as calculateKurtosis
 
-def generate_features(draw_graphs, raw_data, axes, sampling_freq, scale_axes, average, minimum, maximum, rms, stdev, skewness, kurtosis):
+def generate_features(implementation_version, draw_graphs, raw_data, axes, sampling_freq, scale_axes,
+                      average, minimum, maximum, rms, stdev, skewness, kurtosis):
+    if (implementation_version != 1):
+        raise Exception('implementation_version should be 1')
+
     raw_data = raw_data * scale_axes
     raw_data = raw_data.reshape(int(len(raw_data) / len(axes)), len(axes))
 
@@ -83,7 +87,7 @@ if __name__ == "__main__":
     raw_axes = args.axes.split(',')
 
     try:
-        processed = generate_features(args.draw_graphs, raw_features, raw_axes, args.frequency, args.scale_axes,
+        processed = generate_features(1, args.draw_graphs, raw_features, raw_axes, args.frequency, args.scale_axes,
             args.average, args.minimum, args.maximum, args.rms, args.stdev, args.skewness, args.kurtosis)
 
         print('Begin output')

@@ -60,7 +60,6 @@ scipy==1.4.1
 six==1.12.0
 sklearn==0.0
 SoundFile==0.10.3.post1
-speechpy==2.4
 sshuttle==1.0.1
 tabulate==0.8.7
 tbb==2019.0

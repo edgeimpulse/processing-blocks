@@ -10,7 +10,8 @@
         "convolutionKernelSize": 5,
         "cppType": "spectrogram",
         "visualization": "dimensionalityReduction",
-        "experimental": true
+        "experimental": true,
+        "latestImplementationVersion": 2
     },
     "parameters": [
         {

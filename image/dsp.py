@@ -6,7 +6,9 @@ import sys
 import io, base64
 from PIL import Image
 
-def generate_features(draw_graphs, raw_data, axes, sampling_freq, channels):
+def generate_features(implementation_version, draw_graphs, raw_data, axes, sampling_freq, channels):
+    if (implementation_version != 1):
+        raise Exception('implementation_version should be 1')
 
     graphs = []
     pixels = []
@@ -50,7 +52,7 @@ def generate_features(draw_graphs, raw_data, axes, sampling_freq, channels):
             'imageMimeType': 'image/png',
             'type': 'image'
         })
-        
+
     num_channels = 1
     if channels == 'RGB':
         num_channels = 3
@@ -79,7 +81,7 @@ if __name__ == "__main__":
     raw_axes = args.axes.split(',')
 
     try:
-        processed = generate_features(False, raw_features, args.axes, args.frequency, args.channels)
+        processed = generate_features(1, False, raw_features, args.axes, args.frequency, args.channels)
 
         print('Begin output')
         # print(json.dumps(processed))

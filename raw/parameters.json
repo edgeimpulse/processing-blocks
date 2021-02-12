@@ -9,7 +9,8 @@
         "convolutionKernelSize": 7,
         "cppType": "raw",
         "visualization": "dimensionalityReduction",
-        "experimental": false
+        "experimental": false,
+        "latestImplementationVersion": 1
     },
     "parameters": [
         {

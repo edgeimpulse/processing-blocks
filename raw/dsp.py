@@ -3,7 +3,10 @@ import json
 import numpy as np
 import sys
 
-def generate_features(draw_graphs, raw_data, axes, sampling_freq, scale_axes):
+def generate_features(implementation_version, draw_graphs, raw_data, axes, sampling_freq, scale_axes):
+    if (implementation_version != 1):
+        raise Exception('implementation_version should be 1')
+
     if (scale_axes == 1):
         return { 'features': raw_data, 'graphs': [] }
 
@@ -32,7 +35,7 @@ if __name__ == "__main__":
     raw_axes = args.axes.split(',')
 
     try:
-        processed = generate_features(args.draw_graphs, raw_features, raw_axes, args.frequency, args.scale_axes)
+        processed = generate_features(1, args.draw_graphs, raw_features, raw_axes, args.frequency, args.scale_axes)
 
         print('Begin output')
         print(json.dumps(processed))
