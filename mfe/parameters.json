@@ -11,7 +11,8 @@
         "cppType": "mfe",
         "visualization": "dimensionalityReduction",
         "experimental": true,
-        "latestImplementationVersion": 2
+        "latestImplementationVersion": 2,
+        "hasInt16Version": false
     },
     "parameters": [
         {

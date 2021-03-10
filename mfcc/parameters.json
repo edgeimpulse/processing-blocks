@@ -10,7 +10,8 @@
         "cppType": "mfcc",
         "visualization": "dimensionalityReduction",
         "experimental": false,
-        "latestImplementationVersion": 2
+        "latestImplementationVersion": 2,
+        "hasInt16Version": false
     },
     "parameters": [
         {
@@ -76,19 +77,20 @@
             ]
         },
         {
-            "group": "Preemphasis",
+            "group": "Pre-emphasis",
             "items": [
                 {
                     "name": "Coefficient",
                     "value": 0.98,
                     "type": "float",
-                    "help": "The preemphasising coefficient. 0 equals to no filtering.",
+                    "help": "The pre-emphasizing coefficient to apply to the input signal (0 equals to no filtering)",
                     "param": "pre_cof"
                 },
                 {
                     "name": "Shift",
                     "value": 1,
                     "type": "int",
+                    "help": "The pre-emphasis shift value to roll over the input signal",
                     "param": "pre_shift"
                 }
             ]

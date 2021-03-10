@@ -92,11 +92,17 @@ def stack_frames(
 
     # Initial necessary values
     length_signal = sig.shape[0]
-    frame_sample_length = int(
-        np.round(
-            sampling_frequency *
-            frame_length))  # Defined by the number of samples
-    frame_stride = float(np.round(sampling_frequency * frame_stride))
+    if (implementation_version == 1):
+        frame_sample_length = int(
+            np.round(
+                sampling_frequency *
+                frame_length))  # Defined by the number of samples
+    else:
+        frame_sample_length = int(
+            np.ceil(
+                sampling_frequency *
+                frame_length))  # Defined by the number of samples
+    frame_stride = float(np.ceil(sampling_frequency * frame_stride))
 
     # Zero padding is done for allocating space for the last frame.
     if zero_padding:
@@ -117,8 +123,8 @@ def stack_frames(
             numframes = int(math.floor((length_signal
                             - frame_sample_length) / frame_stride))
         elif (implementation_version == 2):
-            numframes = (int(math.ceil((length_signal
-                            - (frame_sample_length - frame_stride)) / frame_stride)))
+            x = (length_signal - (frame_sample_length - frame_stride))
+            numframes = (int(math.floor(x / frame_stride)))
         else:
             raise ValueError('Invalid value for implementation_version, should be 1 or 2 but was ' + (str(implementation_version)))
 

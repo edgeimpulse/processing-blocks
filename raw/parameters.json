@@ -10,7 +10,8 @@
         "cppType": "raw",
         "visualization": "dimensionalityReduction",
         "experimental": false,
-        "latestImplementationVersion": 1
+        "latestImplementationVersion": 1,
+        "hasInt16Version": false
     },
     "parameters": [
         {
