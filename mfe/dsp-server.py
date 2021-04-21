@@ -29,7 +29,8 @@ def single_req(self, fn, body):
         'draw_graphs': body['draw_graphs'],
         'raw_data': np.array(body['features']),
         'axes': np.array(body['axes']),
-        'sampling_freq': body['sampling_freq']
+        'sampling_freq': body['sampling_freq'],
+        'implementation_version': body['implementation_version']
     }
 
     for param_key in body['params'].keys():
@@ -47,7 +48,6 @@ def single_req(self, fn, body):
     self.wfile.write(body.encode())
 
 def batch_req(self, fn, body):
-    print('body', body)
     if (not body['features'] or len(body['features']) == 0):
         raise ValueError('Missing "features" in body')
     if (not 'params' in body):
@@ -58,7 +58,8 @@ def batch_req(self, fn, body):
     base_args = {
         'draw_graphs': False,
         'axes': np.array(body['axes']),
-        'sampling_freq': body['sampling_freq']
+        'sampling_freq': body['sampling_freq'],
+        'implementation_version': body['implementation_version']
     }
 
     for param_key in body['params'].keys():
@@ -114,6 +115,7 @@ class Handler(BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_header('Content-Type', 'application/json')
             self.end_headers()
+            params['version'] = 1
             self.wfile.write(json.dumps(params).encode())
 
         else:
