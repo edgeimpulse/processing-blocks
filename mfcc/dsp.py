@@ -60,7 +60,7 @@ def generate_features(implementation_version, draw_graphs, raw_data, axes, sampl
             fig, ax = plt.subplots()
             fig.set_size_inches(18.5, 20.5)
             ax.set_axis_off()
-            mfcc_data= np.swapaxes(mfcc, 0 ,1)
+            mfcc_data= np.swapaxes(mfcc_cmvn, 0 ,1)
             cax = ax.imshow(mfcc_data, interpolation='nearest', cmap=cm.coolwarm, origin='lower')
 
             buf = io.BytesIO()
