@@ -10,8 +10,8 @@
         "convolutionKernelSize": 5,
         "cppType": "mfe",
         "visualization": "dimensionalityReduction",
-        "experimental": true,
-        "latestImplementationVersion": 2,
+        "experimental": false,
+        "latestImplementationVersion": 3,
         "hasInt16Version": false
     },
     "parameters": [
@@ -34,7 +34,7 @@
                 },
                 {
                     "name": "Filter number",
-                    "value": 32,
+                    "value": 40,
                     "type": "int",
                     "help": "The number of filters in the filterbank",
                     "param": "num_filters"
@@ -60,13 +60,27 @@
                     "help": "Highest band edge of mel filters (in Hz). If set to 0 this is samplerate / 2",
                     "param": "high_frequency",
                     "optional": true
-                },
+                }
+            ]
+        },
+        {
+            "group": "Normalization",
+            "items": [
                 {
                     "name": "Window size",
                     "value": 101,
                     "type": "int",
                     "help": "The size of sliding window for local normalization",
-                    "param": "win_size"
+                    "param": "win_size",
+                    "showForImplementationVersion": [ 1, 2 ]
+                },
+                {
+                    "name": "Noise floor (dB)",
+                    "value": -52,
+                    "type": "int",
+                    "help": "Everything less loud than the noise floor will be dropped",
+                    "param": "noise_floor_db",
+                    "showForImplementationVersion": [ 3 ]
                 }
             ]
         }

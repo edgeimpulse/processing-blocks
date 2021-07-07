@@ -25,9 +25,9 @@ matplotlib.use('Svg')
 
 def generate_features(implementation_version, draw_graphs, raw_data, axes, sampling_freq,
                       frame_length, frame_stride, fft_length,
-                      show_axes):
-    if (implementation_version != 1 and implementation_version != 2):
-        raise Exception('implementation_version should be 1 or 2')
+                      show_axes, noise_floor_db):
+    if (implementation_version != 1 and implementation_version != 2 and implementation_version != 3):
+        raise Exception('implementation_version should be 1, 2 or 3')
 
     fs = sampling_freq
 
@@ -42,6 +42,10 @@ def generate_features(implementation_version, draw_graphs, raw_data, axes, sampl
 
     for ax in range(0, len(axes)):
         signal = raw_data[:,ax]
+
+        if implementation_version >= 3:
+            # Rescale to [-1, 1] and add preemphasis
+            signal = (signal / 2**15).astype(np.float32)
 
         sampling_frequency = fs
 
@@ -59,9 +63,18 @@ def generate_features(implementation_version, draw_graphs, raw_data, axes, sampl
 
         power_spectrum = speechpy.processing.power_spectrum(frames, fft_length)
 
-        power_spectrum = (power_spectrum - np.min(power_spectrum)) / (np.max(power_spectrum) - np.min(power_spectrum))
+        if implementation_version < 3:
+            power_spectrum = (power_spectrum - np.min(power_spectrum)) / (np.max(power_spectrum) - np.min(power_spectrum))
+            power_spectrum[np.isnan(power_spectrum)] = 0
+        else:
+            # Clip to avoid zero values
+            power_spectrum = np.clip(power_spectrum, 1e-30, None)
+            # Convert to dB scale
+            # log_mel_spec = 10 * log10(mel_spectrograms)
+            power_spectrum = 10 * np.log10(power_spectrum)
 
-        power_spectrum[np.isnan(power_spectrum)] = 0
+            power_spectrum = (power_spectrum - noise_floor_db) / ((-1 * noise_floor_db) + 12)
+            power_spectrum = np.clip(power_spectrum, 0, 1)
 
         flattened = power_spectrum.flatten()
         features = np.concatenate((features, flattened))
@@ -132,6 +145,8 @@ if __name__ == "__main__":
                         help='The step between successive frames in seconds')
     parser.add_argument('--fft_length', type=int, default=256,
                         help='Number of FFT points')
+    parser.add_argument('--noise_floor_db', type=int, default=-52,
+                        help='Everything below this loudness will be dropped')
     parser.add_argument('--show-axes', type=lambda x: (str(x).lower() in ['true','1', 'yes']), required=True,
                         help='Whether to show axes on the graph')
 
@@ -142,7 +157,7 @@ if __name__ == "__main__":
 
     try:
         processed = generate_features(2, args.draw_graphs, raw_features, raw_axes, args.frequency,
-            args.frame_length, args.frame_stride, args.num_filters, args.fft_length)
+            args.frame_length, args.frame_stride, args.num_filters, args.fft_length, args.noise_floor_db)
 
         print('Begin output')
         print(json.dumps(processed))

@@ -24,9 +24,12 @@ matplotlib.use('Svg')
 
 def generate_features(implementation_version, draw_graphs, raw_data, axes, sampling_freq,
                       frame_length, frame_stride, num_filters, fft_length,
-                      low_frequency, high_frequency, win_size):
-    if (implementation_version != 1 and implementation_version != 2):
-        raise Exception('implementation_version should be 1 or 2')
+                      low_frequency, high_frequency, win_size, noise_floor_db):
+    if (implementation_version != 1 and implementation_version != 2 and implementation_version != 3):
+        raise Exception('implementation_version should be 1, 2 or 3')
+
+    if (num_filters < 2):
+        raise Exception('Filter number should be at least 2')
 
     fs = sampling_freq
     low_frequency = None if low_frequency == 0 else low_frequency
@@ -44,20 +47,49 @@ def generate_features(implementation_version, draw_graphs, raw_data, axes, sampl
     for ax in range(0, len(axes)):
         signal = raw_data[:,ax]
 
+        if implementation_version >= 3:
+            # Rescale to [-1, 1] and add preemphasis
+            signal = (signal / 2**15).astype(np.float32)
+            signal = speechpy.processing.preemphasis(signal, cof=0.98, shift=1)
+
         ############# Extract MFCC features #############
         mfe, energy = speechpy.feature.mfe(signal, sampling_frequency=fs, implementation_version=implementation_version,
                                            frame_length=frame_length,
                                            frame_stride=frame_stride, num_filters=num_filters, fft_length=fft_length,
                                            low_frequency=low_frequency, high_frequency=high_frequency)
 
-        mfe_cmvn = speechpy.processing.cmvnw(mfe, win_size=win_size, variance_normalization=False)
+        if implementation_version < 3:
+            mfe_cmvn = speechpy.processing.cmvnw(mfe, win_size=win_size, variance_normalization=False)
 
-        if (np.min(mfe_cmvn) != 0 and np.max(mfe_cmvn) != 0):
-            mfe_cmvn = (mfe_cmvn - np.min(mfe_cmvn)) / (np.max(mfe_cmvn) - np.min(mfe_cmvn))
+            if (np.min(mfe_cmvn) != 0 and np.max(mfe_cmvn) != 0):
+                mfe_cmvn = (mfe_cmvn - np.min(mfe_cmvn)) / (np.max(mfe_cmvn) - np.min(mfe_cmvn))
 
-        mfe_cmvn[np.isnan(mfe_cmvn)] = 0
+            mfe_cmvn[np.isnan(mfe_cmvn)] = 0
 
-        flattened = mfe_cmvn.flatten()
+            flattened = mfe_cmvn.flatten()
+        else:
+            # Clip to avoid zero values
+            mfe = np.clip(mfe, 1e-30, None)
+            # Convert to dB scale
+            # log_mel_spec = 10 * log10(mel_spectrograms)
+            mfe = 10 * np.log10(mfe)
+
+            # Add power offset and clip values below 0 (hard filter)
+            # log_mel_spec = (log_mel_spec + self._power_offset - 32 + 32.0) / 64.0
+            # log_mel_spec = tf.clip_by_value(log_mel_spec, 0, 1)
+            mfe = (mfe - noise_floor_db) / ((-1 * noise_floor_db) + 12)
+            mfe = np.clip(mfe, 0, 1)
+
+            # Quantize to 8 bits and dequantize back to float32
+            mfe = np.uint8(np.around(mfe * 2**8))
+            # clip to 2**8
+            mfe = np.clip(mfe, 0, 255)
+            mfe = np.float32(mfe / 2**8)
+
+            mfe_cmvn = mfe
+
+            flattened = mfe.flatten()
+
         features = np.concatenate((features, flattened))
 
         width = np.shape(mfe)[0]
@@ -119,6 +151,8 @@ if __name__ == "__main__":
                         help='Number of FFT points')
     parser.add_argument('--win_size', type=int, default=101,
                         help='The size of sliding window for local normalization')
+    parser.add_argument('--noise-floor-db', type=int, default=-52,
+                        help='Everything below this loudness will be dropped')
     parser.add_argument('--low_frequency', type=int, default=0,
                         help='Lowest band edge of mel filters')
     parser.add_argument('--high_frequency', type=int, default=0,
@@ -132,7 +166,7 @@ if __name__ == "__main__":
     try:
         processed = generate_features(2, args.draw_graphs, raw_features, raw_axes, args.frequency,
             args.frame_length, args.frame_stride, args.num_filters, args.fft_length,
-             args.low_frequency, args.high_frequency, args.win_size)
+             args.low_frequency, args.high_frequency, args.win_size, args.noise_floor_db)
 
         print('Begin output')
         print(json.dumps(processed))

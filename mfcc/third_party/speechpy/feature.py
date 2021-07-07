@@ -28,7 +28,7 @@ import numpy as np
 from . import processing
 from scipy.fftpack import dct
 from . import functions
-
+from scipy import signal as sn
 
 def filterbanks(
         num_filter,

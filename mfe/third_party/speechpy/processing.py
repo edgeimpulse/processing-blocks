@@ -122,11 +122,11 @@ def stack_frames(
         if (implementation_version == 1):
             numframes = int(math.floor((length_signal
                             - frame_sample_length) / frame_stride))
-        elif (implementation_version == 2):
+        elif (implementation_version >= 2):
             x = (length_signal - (frame_sample_length - frame_stride))
             numframes = (int(math.floor(x / frame_stride)))
         else:
-            raise ValueError('Invalid value for implementation_version, should be 1 or 2 but was ' + (str(implementation_version)))
+            raise ValueError('Invalid value for implementation_version, should be 1, 2 or 3 but was ' + (str(implementation_version)))
 
         # new length
         len_sig = int((numframes - 1) * frame_stride + frame_sample_length)
