@@ -53,7 +53,10 @@ def generate_features(implementation_version, draw_graphs, raw_data, axes, sampl
                     frame_stride=frame_stride, num_filters=num_filters, fft_length=fft_length,
                     num_cepstral=num_cepstral,
                     low_frequency=low_frequency, high_frequency=high_frequency)
-        mfcc_cmvn = speechpy.processing.cmvnw(mfcc, win_size=win_size, variance_normalization=True)
+        if win_size > 0:
+            mfcc_cmvn = speechpy.processing.cmvnw(mfcc, win_size=win_size, variance_normalization=True)
+        else:
+            mfcc_cmvn = mfcc
 
         flattened = mfcc_cmvn.flatten()
         features = np.concatenate((features, flattened))

@@ -53,10 +53,10 @@
                     "param": "fft_length"
                 },
                 {
-                    "name": "Window size",
+                    "name": "Normalization window size",
                     "value": 101,
                     "type": "int",
-                    "help": "The size of sliding window for local normalization",
+                    "help": "The size of sliding window for local normalization. Set this to 0 to disable normalization.",
                     "param": "win_size"
                 },
                 {

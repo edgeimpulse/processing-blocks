@@ -59,4 +59,4 @@ def zero_handling(x):
     :param x: The vector.
     :return: The vector with zeros substituted with epsilon values.
     """
-    return np.where(x == 0, np.finfo(float).eps, x)
+    return np.where(x == 0, 1e-10, x)

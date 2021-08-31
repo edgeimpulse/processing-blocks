@@ -143,6 +143,7 @@ def mfcc(
                           num_filters=num_filters, fft_length=fft_length,
                           low_frequency=low_frequency,
                           high_frequency=high_frequency)
+
     if len(feature) == 0:
         return np.empty((0, num_cepstral))
     feature = np.log(feature)
