@@ -122,6 +122,7 @@ def generate_features(implementation_version, draw_graphs, raw_data, axes, sampl
     return {
         'features': features.tolist(),
         'graphs': graphs,
+        'fft_used': [ fft_length ],
         'output_config': {
             'type': 'spectrogram',
             'shape': {

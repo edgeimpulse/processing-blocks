@@ -76,7 +76,7 @@ def generate_features(implementation_version, draw_graphs, raw_data, axes, sampl
     image_config = { 'width': int(width), 'height': int(height), 'channels': num_channels, 'frames': frame_count }
     output_config = { 'type': 'image', 'shape': image_config }
 
-    return { 'features': all_features, 'graphs': graphs, 'output_config': output_config }
+    return { 'features': all_features, 'graphs': graphs, 'output_config': output_config, 'fft_used': [] }
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Returns raw data')

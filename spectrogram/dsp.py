@@ -120,6 +120,7 @@ def generate_features(implementation_version, draw_graphs, raw_data, axes, sampl
     return {
         'features': features.tolist(),
         'graphs': graphs,
+        'fft_used': [ fft_length ],
         'output_config': {
             'type': 'spectrogram',
             'shape': {
@@ -156,8 +157,8 @@ if __name__ == "__main__":
     raw_axes = args.axes.split(',')
 
     try:
-        processed = generate_features(2, args.draw_graphs, raw_features, raw_axes, args.frequency,
-            args.frame_length, args.frame_stride, args.num_filters, args.fft_length, args.noise_floor_db)
+        processed = generate_features(3, args.draw_graphs, raw_features, raw_axes, args.frequency,
+            args.frame_length, args.frame_stride, args.fft_length, args.show_axes, args.noise_floor_db)
 
         print('Begin output')
         print(json.dumps(processed))

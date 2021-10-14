@@ -9,6 +9,10 @@ import struct, re, peakutils
 def filter(type, freq_hz, cut_off_freq, filt_order, data):
     Wn = cut_off_freq / freq_hz    # Normalized frequency (6 / 62.5) = 0.096
 
+    # Catch when frequency too low
+    if (Wn >= 1.0):
+        raise Exception('Sample frequency must be greater than ' + str(cut_off_freq) + 'Hz. Try increasing the frequency in the "Impulse design" page.')
+
     [b, a] = signal.butter(filt_order, Wn=Wn, btype=type)
 
     filtered_data = lfilter(b,a,data)
@@ -221,6 +225,7 @@ def generate_features(implementation_version, draw_graphs, raw_data, axes, sampl
         'features': np.array(features).tolist(),
         'graphs': graphs,
         'labels': labels,
+        'fft_used': [ fft_length ],
         'output_config': { 'type': 'flat', 'shape': { 'width': len(features) } }
     }
 

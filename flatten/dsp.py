@@ -51,6 +51,7 @@ def generate_features(implementation_version, draw_graphs, raw_data, axes, sampl
         'features': features,
         'graphs': [],
         'labels': labels,
+        'fft_used': [],
         'output_config': { 'type': 'flat', 'shape': { 'width': len(features) } }
     }
 
