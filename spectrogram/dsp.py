@@ -11,15 +11,14 @@ from scipy import signal as sn
 import math
 
 # Load our SpeechPy fork
-MODULE_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'third_party', 'speechpy', '__init__.py')
+MODULE_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'third_party', 'speechpy', '__init__.py')
 MODULE_NAME = 'speechpy'
 import importlib
 import sys
 spec = importlib.util.spec_from_file_location(MODULE_NAME, MODULE_PATH)
-module = importlib.util.module_from_spec(spec)
-sys.modules[spec.name] = module
-spec.loader.exec_module(module)
-import speechpy
+speechpy = importlib.util.module_from_spec(spec)
+sys.modules[spec.name] = speechpy
+spec.loader.exec_module(speechpy)
 
 matplotlib.use('Svg')
 

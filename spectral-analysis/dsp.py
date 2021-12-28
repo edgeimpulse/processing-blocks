@@ -196,7 +196,7 @@ def generate_features(implementation_version, draw_graphs, raw_data, axes, sampl
         'suggestedYMin': 0,
         'suggestedYMax': 2,
         'suggestedXMin': 0,
-        'suggestedXMax': 8
+        'suggestedXMax': sampling_freq / 2
     })
 
     graphs.append({
@@ -204,7 +204,7 @@ def generate_features(implementation_version, draw_graphs, raw_data, axes, sampl
         'X': spect_power_graph,
         'y': spect_power_y,
         'suggestedXMin': 0,
-        'suggestedXMax': 8,
+        'suggestedXMax': sampling_freq / 2,
         'suggestedYMin': 1e-7,
         'type': 'logarithmic'
     })

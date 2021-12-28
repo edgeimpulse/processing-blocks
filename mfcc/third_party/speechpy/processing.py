@@ -57,6 +57,21 @@ def preemphasis(signal, shift=1, cof=0.98):
     rolled_signal = np.roll(signal, shift)
     return signal - cof * rolled_signal
 
+def ceil_unless_very_close_to_floor(v):
+    """Ceil unless (very) close to floor
+
+     frame_length is a float and can thus be off by a little bit, e.g.
+     frame_length = 0.018f actually can yield 0.018000011f
+     thus screwing up our frame calculations here...
+
+    Args:
+        v: value to ceil or floor
+    """
+    if (v > np.floor(v)) and (v - np.floor(v) < 0.001):
+        v = np.floor(v)
+    else:
+        v = np.ceil(v)
+    return v
 
 def stack_frames(
         sig,
@@ -99,10 +114,10 @@ def stack_frames(
                 frame_length))  # Defined by the number of samples
     else:
         frame_sample_length = int(
-            np.ceil(
+            ceil_unless_very_close_to_floor(
                 sampling_frequency *
                 frame_length))  # Defined by the number of samples
-    frame_stride = float(np.ceil(sampling_frequency * frame_stride))
+    frame_stride = float(ceil_unless_very_close_to_floor(sampling_frequency * frame_stride))
 
     # Zero padding is done for allocating space for the last frame.
     if zero_padding:
