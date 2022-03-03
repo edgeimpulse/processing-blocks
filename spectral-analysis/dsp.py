@@ -82,34 +82,6 @@ def calculate_spectral_power_edges(sampling_freq, x, edges, n_fft):
 
     return calculate_edges(fx, Pxx_denx)
 
-# Unpack a raw sensor data file,
-# takes binary file and spits out the sampling frequency, x,y,z vectors with the raw values
-# plus a time vector
-def unpack_raw_sensor_data_file(data):
-    header = data[:data.index(0x0a)].decode('ascii')
-    sampling_rate = int(re.match(r'.*?interval (\d+)', header).group(1))
-    sampling_freq = 1000 / sampling_rate
-
-    # loop over accel data
-    raw_accel = data[data.index(0x0a)+1:]
-
-    x = []
-    y = []
-    z = []
-    time = []
-
-    for ix in range(0, len(raw_accel), 6):
-        x.append(struct.unpack('h', raw_accel[ix+0:ix+2])[0])
-        y.append(struct.unpack('h', raw_accel[ix+2:ix+4])[0])
-        z.append(struct.unpack('h', raw_accel[ix+4:ix+6])[0])
-        time.append((ix / 6) * sampling_rate)
-
-    x = list(map(lambda v: v / 100, x))
-    y = list(map(lambda v: v / 100, y))
-    z = list(map(lambda v: v / 100, z))
-
-    return sampling_freq, x, y, z, time
-
 # You can test this function out visually in visualizer.py
 def generate_features(implementation_version, draw_graphs, raw_data, axes, sampling_freq, scale_axes,
                       filter_type, filter_cutoff, filter_order, fft_length, spectral_peaks_count,

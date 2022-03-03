@@ -53,6 +53,12 @@ def preemphasis(signal, shift=1, cof=0.98):
     Returns:
            array: The pre-emphasized signal.
     """
+    
+    if shift <= 0:
+        raise ValueError("Shift cannot be zero, or less than 0.  To disable pre emphasis, set coefficient to 0")
+    if isinstance(shift, float):
+        if not (shift).is_integer():
+            raise ValueError("Shift must be a postive integer")
 
     rolled_signal = np.roll(signal, shift)
     return signal - cof * rolled_signal

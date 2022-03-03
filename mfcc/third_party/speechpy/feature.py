@@ -71,6 +71,13 @@ def filterbanks(
     # should be at the desired frequencies.
     hertz = functions.mel_to_frequency(mels)
 
+    # Here is a really annoying bug, on certain versions of Speechpy / Python the last bucket is off by 0.00001
+    # but on others it isn't (e.g. we've seen this on master). E.g. the last 'hertz' value is not 8,000
+    # (with sampling rate 16,000) but 7,999.999999 thus calculating the bucket to 64, not 65.
+    # To be consistent over all targets we'll adjust the bucket by -0.001 (also happens in SDK)
+    # edge-impulse-sdk/dsp/speechpy/feature.hpp
+    hertz[-1] = hertz[-1] - 0.001
+
     # The frequency resolution required to put filters at the
     # exact points calculated above should be extracted.
     #  So we should round those frequencies to the closest FFT bin.

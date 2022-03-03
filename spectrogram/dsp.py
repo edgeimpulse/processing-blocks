@@ -11,7 +11,7 @@ from scipy import signal as sn
 import math
 
 # Load our SpeechPy fork
-MODULE_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'third_party', 'speechpy', '__init__.py')
+MODULE_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'third_party', 'speechpy', '__init__.py')
 MODULE_NAME = 'speechpy'
 import importlib
 import sys
@@ -44,7 +44,8 @@ def generate_features(implementation_version, draw_graphs, raw_data, axes, sampl
 
         if implementation_version >= 3:
             # Rescale to [-1, 1] and add preemphasis
-            signal = (signal / 2**15).astype(np.float32)
+            if np.any((signal < -1) | (signal > 1)):
+                signal = (signal / 2**15).astype(np.float32)
 
         sampling_frequency = fs
 
