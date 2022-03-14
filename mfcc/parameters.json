@@ -10,7 +10,7 @@
         "cppType": "mfcc",
         "visualization": "dimensionalityReduction",
         "experimental": false,
-        "latestImplementationVersion": 2,
+        "latestImplementationVersion": 3,
         "hasInt16Version": false
     },
     "parameters": [
@@ -91,7 +91,8 @@
                     "value": 1,
                     "type": "int",
                     "help": "The pre-emphasis shift value to roll over the input signal",
-                    "param": "pre_shift"
+                    "param": "pre_shift",
+                    "showForImplementationVersion": [ 1, 2 ]
                 }
             ]
         }

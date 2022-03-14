@@ -25,8 +25,8 @@ def generate_features(implementation_version, draw_graphs, raw_data, axes, sampl
                       num_cepstral, win_size,
                       low_frequency, high_frequency,
                       pre_cof, pre_shift):
-    if (implementation_version != 1 and implementation_version != 2):
-        raise Exception('implementation_version should be 1 or 2')
+    if (implementation_version > 3):
+        raise Exception('implementation_version should be between 1 and 3')
 
     if (num_filters < 2):
         raise Exception('Filter number should be at least 2')
