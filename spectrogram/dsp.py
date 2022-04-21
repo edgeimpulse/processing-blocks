@@ -11,7 +11,7 @@ from scipy import signal as sn
 import math
 
 # Load our SpeechPy fork
-MODULE_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'third_party', 'speechpy', '__init__.py')
+MODULE_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'third_party', 'speechpy', '__init__.py')
 MODULE_NAME = 'speechpy'
 import importlib
 import sys
