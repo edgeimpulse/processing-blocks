@@ -24,4 +24,4 @@ COPY . ./
 
 EXPOSE 4446
 
-CMD python3 -u dsp-server.py
+ENTRYPOINT ["python3", "-u", "dsp-server.py"]
