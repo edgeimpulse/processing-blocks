@@ -7,11 +7,12 @@ def generate_features(implementation_version, draw_graphs, raw_data, axes, sampl
     if (implementation_version != 1):
         raise Exception('implementation_version should be 1')
 
-    if (scale_axes == 1):
-        return { 'features': raw_data, 'graphs': [] }
+    features = raw_data
+    if (scale_axes != 1):
+        features = raw_data * scale_axes
 
     return {
-        'features': raw_data * scale_axes,
+        'features': features,
         'graphs': [],
         'fft_used': [],
         'output_config': { 'type': 'flat', 'shape': { 'width': len(raw_data) } }

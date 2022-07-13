@@ -8,8 +8,7 @@
         "visualization": "dimensionalityReduction",
         "experimental": false,
         "preferConvolution": false,
-        "latestImplementationVersion": 1,
-        "hasInt16Version": false
+        "latestImplementationVersion": 1
     },
     "parameters": [
         {

@@ -8,7 +8,8 @@
         "cppType": "spectral_analysis",
         "experimental": false,
         "latestImplementationVersion": 1,
-        "hasInt16Version": true
+        "visualization": "dimensionalityReduction",
+        "hasFeatureImportance": true
     },
     "parameters": [
         {

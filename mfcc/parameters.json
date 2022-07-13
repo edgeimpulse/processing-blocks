@@ -10,8 +10,7 @@
         "cppType": "mfcc",
         "visualization": "dimensionalityReduction",
         "experimental": false,
-        "latestImplementationVersion": 3,
-        "hasInt16Version": false
+        "latestImplementationVersion": 3
     },
     "parameters": [
         {

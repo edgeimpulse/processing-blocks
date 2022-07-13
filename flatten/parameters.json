@@ -8,7 +8,7 @@
         "cppType": "flatten",
         "experimental": false,
         "latestImplementationVersion": 1,
-        "hasInt16Version": false
+        "hasFeatureImportance": true
     },
     "parameters": [
         {
