@@ -1,27 +1,71 @@
 import argparse
-import json, sys, math
+import json
+import sys
+import math
 import numpy as np
 from scipy import signal
-from scipy.fftpack import fft, fftfreq, fftshift
-from scipy.signal import butter, lfilter
-import struct, re, peakutils
+from scipy.fftpack import fft
+import peakutils
+from scipy.stats import skew
+from scipy.stats import kurtosis as calculateKurtosis
+from scipy.signal import tf2zpk
 
-def filter(type, freq_hz, cut_off_freq, filt_order, data):
-    Wn = cut_off_freq / freq_hz    # Normalized frequency (6 / 62.5) = 0.096
+
+def filter_is_stable(filter_order, filter_cutoff, sampling_freq):
+    # This algorithm is based on the C++ implementation
+    # It breaks the filter into two stages, but can still go unstable
+    M_PI = 3.14159265358979323846264338327950288
+    n_steps = int(filter_order / 2)
+    a = np.float32(np.tan(M_PI * filter_cutoff / sampling_freq))
+    a2 = np.float32(pow(a, 2))
+    A = np.empty(n_steps, dtype='float32')
+    d1 = np.empty(n_steps, dtype='float32')
+    d2 = np.empty(n_steps, dtype='float32')
+    poles = []
+    for ix in range(n_steps):
+        r = np.sin(M_PI * ((2.0 * ix) + 1.0) / (2.0 * filter_order))
+        sampling_freq = a2 + (2.0 * a * r) + 1.0
+        A[ix] = a2 / sampling_freq
+        d1[ix] = 2.0 * (1 - a2) / sampling_freq
+        d2[ix] = -(a2 - (2.0 * a * r) + 1.0) / sampling_freq
+        
+        _, p, _ = tf2zpk(A[ix] * np.float32([1, 2, 1]), np.float32([1, -d1[ix], -d2[ix]]))
+        poles.append(p)
+
+    return np.max(np.abs(poles)) < 1
+
+
+def zero_handling(x):
+    """
+    This function handle the issue with zero values if the are exposed
+    to become an argument for any log function.
+    :param x: The vector.
+    :return: The vector with zeros substituted with epsilon values.
+    """
+    return np.where(x == 0, 1e-10, x)
+
+
+def create_filter(type, freq_hz, cut_off_freq, filter_order):
+    if (filter_order % 2 != 0):
+        raise Exception('Filter order needs to be even (2, 4, 6, 8)')
+    if (filter_order < 1 or filter_order > 9):
+        raise Exception('Filter order needs to be between 2 and 8')
+    # Normalized frequency (6 / 62.5) = 0.096
+    Wn = cut_off_freq * 2 / freq_hz
 
     # Catch when frequency too low
     if (Wn >= 1.0):
-        raise Exception('Sample frequency must be greater than ' + str(cut_off_freq) + 'Hz. Try increasing the frequency in the "Impulse design" page.')
+        raise Exception('Cut-off frequency is above Nyquist (1/2 sample rate (' +
+                        str(freq_hz/2)+')) Choose lower cutoff frequency.')
 
-    [b, a] = signal.butter(filt_order, Wn=Wn, btype=type)
+    return signal.butter(filter_order, Wn=Wn, btype=type, output='sos')
 
-    filtered_data = lfilter(b,a,data)
-    return filtered_data
 
 def frequency_domain_graph(sampling_freq, x):
     N = len(x)
     fx = 2.0/N * np.abs(x[0:N//2])
     return fx.tolist()
+
 
 def frequency_domain_graph_y(sampling_freq, lenX):
     N = lenX
@@ -29,9 +73,11 @@ def frequency_domain_graph_y(sampling_freq, lenX):
     freq_space = np.linspace(0.0, 1.0/(2.0*T), N//2)
     return freq_space.tolist()
 
+
 def spectral_power_graph(sampling_freq, x, n_fft):
     tx, Pxx_denx = signal.periodogram(x, sampling_freq, nfft=n_fft)
     return tx.tolist(), Pxx_denx[1:].tolist()
+
 
 def find_peaks_in_fft(sampling_freq, x, threshold, count):
     N = len(x)
@@ -46,7 +92,8 @@ def find_peaks_in_fft(sampling_freq, x, threshold, count):
     # find and draw all peaks on the graph
     peaks_x = peakutils.indexes(vx, thres=0)
     for p in peaks_x:
-        if (vx[p] < threshold): continue
+        if (x[p] < threshold):
+            continue
         px.append([ freq_space[p], vx[p] ])
 
     # take the top three peaks from every
@@ -57,6 +104,7 @@ def find_peaks_in_fft(sampling_freq, x, threshold, count):
         px.append([ 0, 0 ])
 
     return px
+
 
 def calculate_spectral_power_edges(sampling_freq, x, edges, n_fft):
     fx, Pxx_denx = signal.periodogram(x, sampling_freq, nfft=n_fft)
@@ -82,18 +130,28 @@ def calculate_spectral_power_edges(sampling_freq, x, edges, n_fft):
 
     return calculate_edges(fx, Pxx_denx)
 
-# You can test this function out visually in visualizer.py
+
+def next_power_of_2(x):
+    return 1 if x == 0 else 2**(x - 1).bit_length()
+
+
+def welch_max_hold(fx, sampling_freq, nfft, n_overlap):
+    n_overlap = int(n_overlap)
+    spec_powers = [0 for _ in range(nfft//2+1)]
+    ix = 0
+    while ix <= len(fx):
+        # Slicing truncates if end_idx > len, and rfft will auto zero pad
+        fft_out = np.abs(np.fft.rfft(fx[ix:ix+nfft], nfft))
+        spec_powers = np.maximum(spec_powers, fft_out**2/nfft)
+        ix = ix + (nfft-n_overlap)
+    return np.fft.rfftfreq(nfft, 1/sampling_freq), spec_powers
+
+
 def generate_features(implementation_version, draw_graphs, raw_data, axes, sampling_freq, scale_axes,
                       filter_type, filter_cutoff, filter_order, fft_length, spectral_peaks_count,
-                      spectral_peaks_threshold, spectral_power_edges):
-    if (implementation_version != 1):
-        raise Exception('implementation_version should be 1')
-
-    if (filter_type == 'low' or filter_type == 'high'):
-        if (filter_order % 2 != 0):
-            raise Exception('Filter order needs to be even (2, 4, 6, 8)')
-        if (filter_order < 1 or filter_order > 9):
-            raise Exception('Filter order needs to be between 2 and 8')
+                      spectral_peaks_threshold, spectral_power_edges, do_log, do_fft_overlap):
+    if (implementation_version != 1 and implementation_version != 2):
+        raise Exception('implementation_version should be 1 or 2')
 
     if (not math.log2(fft_length).is_integer()):
         raise Exception('FFT length must be a power of 2')
@@ -101,8 +159,9 @@ def generate_features(implementation_version, draw_graphs, raw_data, axes, sampl
     # reshape first
     raw_data = raw_data.reshape(int(len(raw_data) / len(axes)), len(axes))
 
-    if (isinstance(spectral_power_edges, str)):
-        spectral_power_edges = [float(item.strip()) for item in spectral_power_edges.split(',')]
+    if implementation_version == 1 and isinstance(spectral_power_edges, str):
+        spectral_power_edges = [float(item.strip())
+                                for item in spectral_power_edges.split(',')]
 
     features = []
     graphs = []
@@ -111,95 +170,155 @@ def generate_features(implementation_version, draw_graphs, raw_data, axes, sampl
     freq_domain_graph = {}
     spect_power_graph = {}
     spect_power_y = []
+    fft_band_labels = []
+    butter_sos = None
+
+    # create filter to denoise
+    if (filter_type == 'low' or filter_type == 'high') and filter_order > 0:
+        butter_sos = create_filter(
+            filter_type, sampling_freq, filter_cutoff, filter_order)
+        butter_sos = np.float32(butter_sos)
+
+        # Design check (Python only step)
+        if not filter_is_stable(filter_order, filter_cutoff, sampling_freq):
+            raise Exception(
+                'Filter created is not stable. Move cutoff away from 0 or Nyquist')
 
     for ax in range(0, len(axes)):
-        X = raw_data[:,ax]
+        fx = raw_data[:, ax]
 
         # potentially scale data from sensor
-        fx = np.array(X, dtype='f') * scale_axes
+        fx = np.array(fx, dtype='f') * scale_axes
+
+        # apply filter to denoise
+        if butter_sos is not None:
+            fx = signal.sosfilt(butter_sos, fx)
 
         # offset by the mean
         fx = np.array(fx) - np.mean(fx)
-
-        # apply lowpass filter to denoise
-        if (filter_type == 'low' or filter_type == 'high'):
-            fx = filter(filter_type, sampling_freq, filter_cutoff * 2, filter_order, fx)
 
         # add to graph
         after_filter_graph[axes[ax]] = fx.tolist()
 
         # add root mean square of the features
         features.append(np.sqrt(np.mean(np.square(fx))))
+        # add labels as well
+        labels = [ 'RMS' ]
 
-        # find spectral peaks
-        # returns 3 peaks with each two values (freq+height) so 6 features in total
-        px = find_peaks_in_fft(sampling_freq, fft(fx, n=fft_length), spectral_peaks_threshold, spectral_peaks_count)
+        if (implementation_version >= 2):
+            # When mean is zero (subtracted out above), stdev == rms
+            # Intentionally skip std dev
+            features.append(float(skew(fx)))
+            labels.append('Skewness')
+            features.append(float(calculateKurtosis(fx)))
+            labels.append('Kurtosis')
 
-        freq_domain_graph[axes[ax]] = frequency_domain_graph(sampling_freq, fft(fx, n=fft_length))
+        if (implementation_version == 1):
+            # FFT and frequency domain graph
+            fft_res = fft(fx, n=fft_length)
+            freq_domain_graph[axes[ax]] = frequency_domain_graph(sampling_freq, fft_res)
 
-        # add them to the features list too
-        for peak in px:
-            features.append(peak[0]) # 0 => freq
-            features.append(peak[1]) # 1 => height
+            # find spectral peaks
+            # returns N peaks with each two values (freq+height) so (N*2) features in total
+            px = find_peaks_in_fft(sampling_freq, fft_res, spectral_peaks_threshold, spectral_peaks_count)
 
-        # spectral power edges
-        sx = calculate_spectral_power_edges(sampling_freq, fx, spectral_power_edges, n_fft=fft_length)
-        # these are 4 edges each
-        for edge in sx:
-            features.append(edge / 10)
+            # add them to the features list too
+            for peak in px:
+                features.append(peak[0]) # 0 => freq
+                features.append(peak[1]) # 1 => height
 
-        # spectral power graph
-        tx, pxx = spectral_power_graph(sampling_freq, fx, n_fft=fft_length)
-        spect_power_graph[axes[ax]] = pxx
-        spect_power_y = tx # all the same so fine here
+            # spectral power edges
+            sx = calculate_spectral_power_edges(sampling_freq, fx, spectral_power_edges, n_fft=fft_length)
+            # these are N edges each
+            for edge in sx:
+                features.append(edge / 10)
 
-    graphs.append({
-        'name': 'After filter',
-        'X': after_filter_graph,
-        'y': np.linspace(0.0, len(fx) * (1 / sampling_freq) * 1000, len(fx) + 1).tolist(),
-        'suggestedYMin': -1,
-        'suggestedYMax': 1
-    })
+            # spectral power graph
+            if (draw_graphs):
+                tx, pxx = spectral_power_graph(sampling_freq, fx, n_fft=fft_length)
+                spect_power_graph[axes[ax]] = pxx
+                spect_power_y = tx # all the same so fine here
 
-    graphs.append({
-        'name': 'Frequency domain',
-        'X': freq_domain_graph,
-        'y': frequency_domain_graph_y(sampling_freq, raw_data.shape[0]),
-        'suggestedYMin': 0,
-        'suggestedYMax': 2,
-        'suggestedXMin': 0,
-        'suggestedXMax': sampling_freq / 2
-    })
+        else:
+            freqs, spec_powers = welch_max_hold(
+                fx, sampling_freq, nfft=fft_length, n_overlap=fft_length/2 if do_fft_overlap else 0)
+            freq_spacing = freqs[1]
+            if do_log:
+                spec_powers = np.log10(zero_handling(spec_powers))
 
-    graphs.append({
-        'name': 'Spectral power',
-        'X': spect_power_graph,
-        'y': spect_power_y,
-        'suggestedXMin': 0,
-        'suggestedXMax': sampling_freq / 2,
-        'suggestedYMin': 1e-7,
-        'type': 'logarithmic'
-    })
+            spect_power_graph[axes[ax]] = spec_powers.tolist()
+            spect_power_y = freqs.tolist()  # all the same so fine here
 
-    # add labels as well
-    labels = [
-        'RMS'
-    ]
+            # Optimization: since we subtract the mean at the begining, bin 0 (DC) will always be ~0, so skip it
+            for i in range(1, len(freqs)):
+                # low-pass filter? skip everything > cutoff
+                if (filter_type == 'low' and freqs[i] - freq_spacing/2 > filter_cutoff):
+                    break  # no more interesting bins
+                # high-pass filter? skip everything < cutoff
+                if (filter_type == 'high' and freqs[i] + freq_spacing/2 < filter_cutoff):
+                    continue
 
-    for x in range(1, spectral_peaks_count + 1):
-        labels.append('Peak ' + str(x) + ' Freq')
-        labels.append('Peak ' + str(x) + ' Height')
+                features.append(spec_powers[i])
 
-    for k in range(0, len(spectral_power_edges) - 1):
-        labels.append('Spectral Power ' + str(spectral_power_edges[k]) + ' - ' + str(spectral_power_edges[k + 1]))
+                # only for the first axis we add the spectral power band labels (otherwise duplicates)
+                if (ax == 0):
+                    band_from = str(round(freqs[i] - freq_spacing/2, 2))
+                    band_to = str(round(freqs[i] + freq_spacing/2, 2))
+                    fft_band_labels.append(
+                        'Spectral Power ' + band_from + ' - ' + band_to + ' Hz')
+
+            if not fft_band_labels:
+                raise Exception("Cutoff frequency masked all FFT bins.")
+
+    if draw_graphs:
+        if butter_sos is not None:
+            w, h = signal.sosfreqz(butter_sos, fs=sampling_freq)
+
+            graphs.append({
+                'name': 'Filter response (dB)',
+                'X': [20 * np.log10(zero_handling(abs(h))).tolist()],
+                'y': w.tolist()
+            })
+
+        graphs.append({
+            'name': 'After filter',
+            'X': after_filter_graph,
+            'y': np.linspace(0.0, len(fx) * (1 / sampling_freq) * 1000, len(fx) + 1).tolist(),
+            'suggestedYMin': -1,
+            'suggestedYMax': 1
+        })
+
+        units = 'log' if do_log else 'linear'
+        graphs.append({
+            'name': f'Spectral power ({units})',
+            'X': spect_power_graph,
+            'y': spect_power_y,
+            'suggestedYMin': 0,
+            'suggestedXMin': 0,
+            'suggestedXMax': sampling_freq / 2
+        })
+
+    if (implementation_version == 1):
+        for x in range(1, spectral_peaks_count + 1):
+            labels.append('Peak ' + str(x) + ' Freq')
+            labels.append('Peak ' + str(x) + ' Height')
+
+        for k in range(0, len(spectral_power_edges) - 1):
+            labels.append('Spectral Power ' + str(spectral_power_edges[k]) + ' - ' + str(
+                spectral_power_edges[k + 1]) + ' Hz')
+
+    else:
+        for n in fft_band_labels:
+            labels.append(n)
 
     return {
         'features': np.array(features).tolist(),
         'graphs': graphs,
         'labels': labels,
-        'fft_used': [ fft_length ],
-        'output_config': { 'type': 'flat', 'shape': { 'width': len(features) } }
+        'fft_used': [fft_length],
+        'output_config': {'type': 'flat', 'shape': {'width': len(features)}}
     }
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Digital Signal Processing script for accelerometer data')
@@ -225,6 +344,9 @@ if __name__ == "__main__":
                         help='spectral peaks threshold (default: 0.1)')
     parser.add_argument('--spectral-power-edges', type=str, default='0.1, 0.5, 1.0, 2.0, 5.0',
                         help='spectral power edges (pass as comma separated values, default: "0.1, 0.5, 1.0, 2.0, 5.0")')
+    parser.add_argument('--do-log', type=bool, default=False,
+                        help='take log of spectrum as features')
+
     parser.add_argument('--draw-graphs', type=lambda x: (str(x).lower() in ['true','1', 'yes']),
                         required=True,
                         help='Whether to draw graphs')
@@ -235,8 +357,8 @@ if __name__ == "__main__":
     raw_axes = args.axes.split(',')
 
     try:
-        processed = generate_features(1, args.draw_graphs, raw_features, raw_axes, args.frequency, args.scale_axes, args.filter_type, args.filter_cutoff,
-            args.filter_order, args.fft_length, args.spectral_peaks_count, args.spectral_peaks_threshold, args.spectral_power_edges)
+        processed = generate_features(2, args.draw_graphs, raw_features, raw_axes, args.frequency, args.scale_axes, args.filter_type, args.filter_cutoff,
+            args.filter_order, args.fft_length, args.spectral_peaks_count, args.spectral_peaks_threshold, args.spectral_power_edges, args.do_log)
 
         print('Begin output')
         print(json.dumps(processed))

@@ -7,13 +7,13 @@
         "preferConvolution": false,
         "cppType": "spectral_analysis",
         "experimental": false,
-        "latestImplementationVersion": 1,
+        "latestImplementationVersion": 2,
         "visualization": "dimensionalityReduction",
         "hasFeatureImportance": true
     },
     "parameters": [
         {
-            "group": "Scaling",
+            "group": "Filter",
             "items": [
                 {
                     "name": "Scale axes",
@@ -21,15 +21,10 @@
                     "type": "float",
                     "help": "Multiplies axes by this number",
                     "param": "scale-axes"
-                }
-            ]
-        },
-        {
-            "group": "Filter",
-            "items": [
+                },
                 {
                     "name": "Type",
-                    "value": "low",
+                    "value": "none",
                     "help": "Type of filter to apply to the raw data",
                     "type": "select",
                     "valid": [ "low", "high", "none" ],
@@ -40,14 +35,24 @@
                     "value": 3,
                     "type": "float",
                     "help": "Cut-off frequency in hertz",
-                    "param": "filter-cutoff"
+                    "param": "filter-cutoff",
+                    "showIf": {
+                        "parameter": "filter-type",
+                        "operator": "neq",
+                        "value": "none"
+                    }
                 },
                 {
                     "name": "Order",
                     "value": 6,
                     "type": "int",
-                    "help": "The maximum delay, in samples, used in creating each output sample",
-                    "param": "filter-order"
+                    "help": "Number of poles to use in filter. More improves filtering at expense of latency. Use zero to only mask FFT bins and skip filtering.",
+                    "param": "filter-order",
+                    "showIf": {
+                        "parameter": "filter-type",
+                        "operator": "neq",
+                        "value": "none"
+                    }
                 }
             ]
         },
@@ -56,7 +61,7 @@
             "items": [
                 {
                     "name": "FFT length",
-                    "value": 128,
+                    "value": 16,
                     "type": "int",
                     "help": "Number of FFT points",
                     "param": "fft-length"
@@ -66,21 +71,40 @@
                     "value": 3,
                     "type": "int",
                     "help": "Number of spectral power peaks",
-                    "param": "spectral-peaks-count"
+                    "param": "spectral-peaks-count",
+                    "showForImplementationVersion": [ 1 ]
                 },
                 {
                     "name": "Peaks threshold",
                     "value": 0.1,
                     "type": "float",
                     "help": "Minimum (normalized) threshold for a peak, this eliminates peaks that are very close",
-                    "param": "spectral-peaks-threshold"
+                    "param": "spectral-peaks-threshold",
+                    "showForImplementationVersion": [ 1 ]
                 },
                 {
                     "name": "Power edges",
                     "value": "0.1, 0.5, 1.0, 2.0, 5.0",
                     "type": "string",
                     "help": "Splits the spectral density in various buckets",
-                    "param": "spectral-power-edges"
+                    "param": "spectral-power-edges",
+                    "showForImplementationVersion": [ 1 ]
+                },
+                {
+                    "name": "Take log of spectrum?",
+                    "value": true,
+                    "type": "boolean",
+                    "help": "Apply log base 10 to spectrum",
+                    "param": "do-log",
+                    "showForImplementationVersion": [ 2 ]
+                },
+                {
+                    "name": "Overlap FFT frames?",
+                    "value": true,
+                    "type": "boolean",
+                    "help": "When more than one FFT is needed to cover a window, then setting true will reuse the last half of the previous FFT frame. Similar to frame stride.",
+                    "param": "do-fft-overlap",
+                    "showForImplementationVersion": [ 2 ]
                 }
             ]
         }

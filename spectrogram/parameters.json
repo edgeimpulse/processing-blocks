@@ -32,7 +32,7 @@
                     "param": "frame_stride"
                 },
                 {
-                    "name": "Frequency bands",
+                    "name": "FFT length",
                     "value": 128,
                     "type": "int",
                     "help": "Number of frequency bands. Choose a power of two (e.g. 64, 128, 256) for optimal performance on device.",
