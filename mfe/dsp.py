@@ -9,6 +9,11 @@ import time
 import matplotlib
 from scipy import signal as sn
 
+import pathlib
+ROOT = pathlib.Path(__file__).parent
+sys.path.append(str(ROOT / '..'))
+from common.errors import ConfigurationError
+
 # Load our SpeechPy fork
 MODULE_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'third_party', 'speechpy', '__init__.py')
 MODULE_NAME = 'speechpy'
@@ -28,7 +33,7 @@ def generate_features(implementation_version, draw_graphs, raw_data, axes, sampl
         raise Exception('implementation_version should be 1, 2 or 3')
 
     if (num_filters < 2):
-        raise Exception('Filter number should be at least 2')
+        raise ConfigurationError('Filter number should be at least 2')
 
     fs = sampling_freq
     low_frequency = None if low_frequency == 0 else low_frequency

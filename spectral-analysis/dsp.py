@@ -9,7 +9,12 @@ import peakutils
 from scipy.stats import skew
 from scipy.stats import kurtosis as calculateKurtosis
 from scipy.signal import tf2zpk
+import pathlib
 
+ROOT = pathlib.Path(__file__).parent
+sys.path.append(str(ROOT / '..'))
+
+from common.errors import ConfigurationError
 
 def filter_is_stable(filter_order, filter_cutoff, sampling_freq):
     # This algorithm is based on the C++ implementation
@@ -47,15 +52,15 @@ def zero_handling(x):
 
 def create_filter(type, freq_hz, cut_off_freq, filter_order):
     if (filter_order % 2 != 0):
-        raise Exception('Filter order needs to be even (2, 4, 6, 8)')
+        raise ConfigurationError('Filter order needs to be even (2, 4, 6, 8)')
     if (filter_order < 1 or filter_order > 9):
-        raise Exception('Filter order needs to be between 2 and 8')
+        raise ConfigurationError('Filter order needs to be between 2 and 8')
     # Normalized frequency (6 / 62.5) = 0.096
     Wn = cut_off_freq * 2 / freq_hz
 
     # Catch when frequency too low
     if (Wn >= 1.0):
-        raise Exception('Cut-off frequency is above Nyquist (1/2 sample rate (' +
+        raise ConfigurationError('Cut-off frequency is above Nyquist (1/2 sample rate (' +
                         str(freq_hz/2)+')) Choose lower cutoff frequency.')
 
     return signal.butter(filter_order, Wn=Wn, btype=type, output='sos')
@@ -154,7 +159,7 @@ def generate_features(implementation_version, draw_graphs, raw_data, axes, sampl
         raise Exception('implementation_version should be 1 or 2')
 
     if (not math.log2(fft_length).is_integer()):
-        raise Exception('FFT length must be a power of 2')
+        raise ConfigurationError('FFT length must be a power of 2')
 
     # reshape first
     raw_data = raw_data.reshape(int(len(raw_data) / len(axes)), len(axes))
@@ -181,7 +186,7 @@ def generate_features(implementation_version, draw_graphs, raw_data, axes, sampl
 
         # Design check (Python only step)
         if not filter_is_stable(filter_order, filter_cutoff, sampling_freq):
-            raise Exception(
+            raise ConfigurationError(
                 'Filter created is not stable. Move cutoff away from 0 or Nyquist')
 
     for ax in range(0, len(axes)):
