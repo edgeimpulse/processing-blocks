@@ -53,7 +53,7 @@ def preemphasis(signal, shift=1, cof=0.98):
     Returns:
            array: The pre-emphasized signal.
     """
-    
+
     if shift <= 0:
         raise ValueError("Shift cannot be zero, or less than 0.  To disable pre emphasis, set coefficient to 0")
     if isinstance(shift, float):
@@ -78,6 +78,69 @@ def ceil_unless_very_close_to_floor(v):
     else:
         v = np.ceil(v)
     return v
+
+def calculate_number_of_frames(
+        sig,
+        sampling_frequency,
+        implementation_version,
+        frame_length=0.020,
+        frame_stride=0.020,
+        zero_padding=True):
+    """Calculate the number of frames in the spectrogram.
+
+    Args:
+        sig (array): The audio signal to frame of size (N,).
+        sampling_frequency (int): The sampling frequency of the signal.
+        frame_length (float): The length of the frame in second.
+        frame_stride (float): The stride between frames.
+        filter (array): The time-domain filter for applying to each frame.
+            By default it is one so nothing will be changed.
+        zero_padding (bool): If the samples is not a multiple of
+            frame_length(number of frames sample), zero padding will
+            be done for generating last frame.
+
+    Returns:
+            numframes, frame_sample_length, frame_stride
+
+    """
+
+    # Check dimension
+    s = "Signal dimention should be of the format of (N,) but it is %s instead"
+    assert sig.ndim == 1, s % str(sig.shape)
+
+    # Initial necessary values
+    length_signal = sig.shape[0]
+    if (implementation_version == 1):
+        frame_sample_length = int(
+            np.round(
+                sampling_frequency *
+                frame_length))  # Defined by the number of samples
+    else:
+        frame_sample_length = int(
+            ceil_unless_very_close_to_floor(
+                sampling_frequency *
+                frame_length))  # Defined by the number of samples
+    frame_stride = float(ceil_unless_very_close_to_floor(sampling_frequency * frame_stride))
+
+    # Zero padding is done for allocating space for the last frame.
+    if zero_padding:
+        # Calculation of number of frames
+        numframes = (int(math.ceil((length_signal
+                                      - frame_sample_length) / frame_stride)))
+
+    else:
+        # No zero padding! The last frame which does not have enough
+        # samples(remaining samples <= frame_sample_length), will be dropped!
+        if (implementation_version == 1):
+            numframes = int(math.floor((length_signal
+                            - frame_sample_length) / frame_stride))
+        elif (implementation_version >= 2):
+            x = (length_signal - (frame_sample_length - frame_stride))
+            numframes = (int(math.floor(x / frame_stride)))
+        else:
+            raise ValueError('Invalid value for implementation_version, should be 1, 2 or 3 but was ' + (str(implementation_version)))
+
+    return numframes, frame_sample_length, frame_stride
 
 def stack_frames(
         sig,
@@ -107,47 +170,20 @@ def stack_frames(
 
     """
 
-    # Check dimension
-    s = "Signal dimention should be of the format of (N,) but it is %s instead"
-    assert sig.ndim == 1, s % str(sig.shape)
+    numframes, frame_sample_length, frame_stride = calculate_number_of_frames(sig, sampling_frequency,
+        implementation_version, frame_length, frame_stride, zero_padding)
 
     # Initial necessary values
     length_signal = sig.shape[0]
-    if (implementation_version == 1):
-        frame_sample_length = int(
-            np.round(
-                sampling_frequency *
-                frame_length))  # Defined by the number of samples
-    else:
-        frame_sample_length = int(
-            ceil_unless_very_close_to_floor(
-                sampling_frequency *
-                frame_length))  # Defined by the number of samples
-    frame_stride = float(ceil_unless_very_close_to_floor(sampling_frequency * frame_stride))
 
     # Zero padding is done for allocating space for the last frame.
     if zero_padding:
-        # Calculation of number of frames
-        numframes = (int(math.ceil((length_signal
-                                      - frame_sample_length) / frame_stride)))
-
         # Zero padding
         len_sig = int(numframes * frame_stride + frame_sample_length)
         additive_zeros = np.zeros((len_sig - length_signal,))
         signal = np.concatenate((sig, additive_zeros))
 
     else:
-        # No zero padding! The last frame which does not have enough
-        # samples(remaining samples <= frame_sample_length), will be dropped!
-        if (implementation_version == 1):
-            numframes = int(math.floor((length_signal
-                            - frame_sample_length) / frame_stride))
-        elif (implementation_version >= 2):
-            x = (length_signal - (frame_sample_length - frame_stride))
-            numframes = (int(math.floor(x / frame_stride)))
-        else:
-            raise ValueError('Invalid value for implementation_version, should be 1, 2 or 3 but was ' + (str(implementation_version)))
-
         # new length
         len_sig = int((numframes - 1) * frame_stride + frame_sample_length)
         signal = sig[0:len_sig]

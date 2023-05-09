@@ -35,7 +35,8 @@ def filterbanks(
         coefficients,
         sampling_freq,
         low_freq=None,
-        high_freq=None):
+        high_freq=None,
+        use_old_mels=False):
     """Compute the Mel-filterbanks. Each filter will be stored in one rows.
     The columns correspond to fft bins.
 
@@ -53,7 +54,8 @@ def filterbanks(
                which are filterbank
     """
     high_freq = high_freq or sampling_freq / 2
-    low_freq = low_freq or 300
+    if low_freq is None:
+        low_freq = 300
     s = "High frequency cannot be greater than half of the sampling frequency!"
     assert high_freq <= sampling_freq / 2, s
     assert low_freq >= 0, "low frequency cannot be less than zero!"
@@ -81,9 +83,14 @@ def filterbanks(
     # The frequency resolution required to put filters at the
     # exact points calculated above should be extracted.
     #  So we should round those frequencies to the closest FFT bin.
+    if use_old_mels:
+        fftpoints = coefficients
+    else:
+        # bug fix
+        fftpoints = (coefficients - 1) * 2 # rev engineer fft size
     freq_index = (
         np.floor(
-            (coefficients +
+            (fftpoints +
              1) *
             hertz /
             sampling_freq)).astype(int)
@@ -103,7 +110,7 @@ def filterbanks(
                                                         middle=middle,
                                                         right=right)
 
-    return filterbank
+    return filterbank, hertz[1:-1]
 
 
 def mfcc(
@@ -117,7 +124,8 @@ def mfcc(
         fft_length=512,
         low_frequency=0,
         high_frequency=None,
-        dc_elimination=True):
+        dc_elimination=True,
+        use_old_mels=False):
     """Compute MFCC features from an audio signal.
 
     Args:
@@ -144,12 +152,13 @@ def mfcc(
     Returns:
         array: A numpy array of size (num_frames x num_cepstral) containing mfcc features.
     """
-    feature, energy = mfe(signal, implementation_version=implementation_version,
+    feature, energy, _ = mfe(signal, implementation_version=implementation_version,
                           sampling_frequency=sampling_frequency,
                           frame_length=frame_length, frame_stride=frame_stride,
                           num_filters=num_filters, fft_length=fft_length,
                           low_frequency=low_frequency,
-                          high_frequency=high_frequency)
+                          high_frequency=high_frequency,
+                          use_old_mels=use_old_mels)
 
     if len(feature) == 0:
         return np.empty((0, num_cepstral))
@@ -164,7 +173,7 @@ def mfcc(
 
 
 def mfe(signal, sampling_frequency, implementation_version, frame_length=0.020, frame_stride=0.01,
-        num_filters=40, fft_length=512, low_frequency=0, high_frequency=None):
+        num_filters=40, fft_length=512, low_frequency=0, high_frequency=None, use_old_mels=False):
     """Compute Mel-filterbank energy features from an audio signal.
 
     Args:
@@ -216,18 +225,19 @@ def mfe(signal, sampling_frequency, implementation_version, frame_length=0.020, 
     frame_energies = functions.zero_handling(frame_energies)
 
     # Extracting the filterbank
-    filter_banks = filterbanks(
+    filter_banks, filter_freqs = filterbanks(
         num_filters,
         coefficients,
         sampling_frequency,
         low_frequency,
-        high_frequency)
+        high_frequency,
+        use_old_mels)
 
     # Filterbank energies
     features = np.dot(power_spectrum, filter_banks.T)
     features = functions.zero_handling(features)
 
-    return features, frame_energies
+    return features, frame_energies, filter_freqs
 
 
 def lmfe(signal, sampling_frequency, implementation_version, frame_length=0.020, frame_stride=0.01,
@@ -256,7 +266,7 @@ def lmfe(signal, sampling_frequency, implementation_version, frame_length=0.020,
               array: Features - The log energy of fiterbank of size num_frames x num_filters frame_log_energies. The log energy of each frame num_frames x 1
     """
 
-    feature, frame_energies = mfe(signal,
+    feature, frame_energies, _ = mfe(signal,
                                   implementation_version=implementation_version,
                                   sampling_frequency=sampling_frequency,
                                   frame_length=frame_length,

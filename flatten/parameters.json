@@ -1,7 +1,7 @@
 {
     "info": {
         "title": "Flatten",
-        "author": "EdgeImpulse Inc.",
+        "author": "Edge Impulse",
         "description": "Flatten an axis into a single value, useful for slow-moving averages like temperature data, in combination with other blocks.",
         "name": "Flatten",
         "preferConvolution": false,

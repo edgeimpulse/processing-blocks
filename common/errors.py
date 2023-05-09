@@ -1,4 +1,6 @@
 import datetime
+import json
+import traceback
 
 
 class ConfigurationError(Exception):
@@ -6,6 +8,12 @@ class ConfigurationError(Exception):
 
 
 def log(*msg, level='warn'):
-    s = datetime.datetime.now().replace(microsecond=0).isoformat() + f'Z logger=dsp_block level={level} '
-    s += ' '.join([str(i) for i in msg])
-    print(s)
+    msg_clean = ' '.join([str(i) for i in msg])
+    print(json.dumps(
+        {'msg': msg_clean,
+         'level': level,
+         'time': datetime.datetime.now().replace(microsecond=0).isoformat() + 'Z'}))
+
+
+def log_exception(msg):
+    log(msg + ': ' + traceback.format_exc(), level='error')

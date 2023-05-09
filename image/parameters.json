@@ -1,7 +1,7 @@
 {
     "info": {
         "title": "Image",
-        "author": "EdgeImpulse Inc.",
+        "author": "Edge Impulse",
         "description": "Preprocess and normalize image data, and optionally reduce the color depth.",
         "name": "Image",
         "cppType": "image",

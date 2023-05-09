@@ -9,7 +9,8 @@ from urllib.parse import urlparse, parse_qs
 import traceback
 import logging
 import numpy as np
-from dsp import generate_features
+import jax.numpy as jnp
+from dsp import generate_features, get_tflite_implementation
 
 def get_params(self):
     with open('parameters.json', 'r') as f:
@@ -38,7 +39,9 @@ def single_req(self, fn, body):
 
     processed = fn(**args)
     if (isinstance(processed['features'], np.ndarray)):
-        processed['features'] = processed['features'].tolist()
+        processed['features'] = processed['features'].flatten().tolist()
+    if (isinstance(processed['features'], jnp.ndarray)):
+        processed['features'] = processed['features'].flatten().tolist()
 
     body = json.dumps(processed)
 
@@ -75,7 +78,9 @@ def batch_req(self, fn, body):
         args['raw_data'] = np.array(example)
         f = fn(**args)
         if (isinstance(f['features'], np.ndarray)):
-            features.append(f['features'].tolist())
+            features.append(f['features'].flatten().tolist())
+        elif (isinstance(f['features'], jnp.ndarray)):
+            features.append(f['features'].flatten().tolist())
         else:
             features.append(f['features'])
 
@@ -98,6 +103,30 @@ def batch_req(self, fn, body):
     self.send_header('Content-Type', 'application/json')
     self.end_headers()
     self.wfile.write(body.encode())
+
+def tflite_req(self, fn, body):
+    if (not 'params' in body):
+        raise ValueError('Missing "params" in body')
+    if (not 'sampling_freq' in body):
+        raise ValueError('Missing "sampling_freq" in body')
+
+    args = {
+        'axes': np.array(body['axes']),
+        'sampling_freq': body['sampling_freq'],
+        'implementation_version': body['implementation_version'],
+        'input_shape': body['input_shape']
+    }
+
+    for param_key in body['params'].keys():
+        args[param_key] = body['params'][param_key]
+
+    tflite_byte_arr = fn(**args)
+
+    self.send_response(200)
+    self.send_header('Content-type', 'application/octet-stream')
+    self.send_header('Content-Disposition', 'attachment; filename="dsp.tflite"')
+    self.end_headers()
+    self.wfile.write(tflite_byte_arr)
 
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
@@ -138,6 +167,19 @@ class Handler(BaseHTTPRequestHandler):
                 post_body = self.rfile.read(content_len)
                 body = json.loads(post_body.decode('utf-8'))
                 batch_req(self, generate_features, body)
+
+            elif (url.path == '/tflite-impl'):
+                try:
+                    content_len = int(self.headers.get('Content-Length'))
+                    post_body = self.rfile.read(content_len)
+                    body = json.loads(post_body.decode('utf-8'))
+                    tflite_req(self, get_tflite_implementation, body)
+                except Exception as e:
+                    print('Failed to handle request', e, traceback.format_exc())
+                    self.send_response(500)
+                    self.send_header('Content-Type', 'text/plain')
+                    self.end_headers()
+                    self.wfile.write(str(e).encode())
 
             else:
                 self.send_response(404)

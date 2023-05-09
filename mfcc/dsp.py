@@ -5,13 +5,14 @@ import os, sys
 from matplotlib import cm
 import io, base64
 import matplotlib.pyplot as plt
-import time
 import matplotlib
+import math
 
 import pathlib
 ROOT = pathlib.Path(__file__).parent
 sys.path.append(str(ROOT / '..'))
 from common.errors import ConfigurationError
+from common import graphing
 
 # Load our SpeechPy fork
 MODULE_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'third_party', 'speechpy', '__init__.py')
@@ -25,16 +26,22 @@ spec.loader.exec_module(speechpy)
 
 matplotlib.use('Svg')
 
+
 def generate_features(implementation_version, draw_graphs, raw_data, axes, sampling_freq,
                       frame_length, frame_stride, num_filters, fft_length,
                       num_cepstral, win_size,
                       low_frequency, high_frequency,
                       pre_cof, pre_shift):
-    if (implementation_version > 3):
-        raise Exception('implementation_version should be between 1 and 3')
+    if (implementation_version > 4):
+        raise Exception('implementation_version should be between 1 and 4')
 
     if (num_filters < 2):
         raise ConfigurationError('Filter number should be at least 2')
+    if (not math.log2(fft_length).is_integer()):
+        raise ConfigurationError('FFT length must be a power of 2')
+    if (len(axes) != 1):
+        raise ConfigurationError('MFCC blocks only support a single axis, ' +
+            'create one MFCC block per axis under **Create impulse**')
 
     fs = sampling_freq
     high_frequency = None if high_frequency == 0 else high_frequency
@@ -48,15 +55,32 @@ def generate_features(implementation_version, draw_graphs, raw_data, axes, sampl
     for ax in range(0, len(axes)):
         signal = raw_data[:,ax]
 
+        numframes, _, __ = speechpy.processing.calculate_number_of_frames(
+            signal,
+            implementation_version=implementation_version,
+            sampling_frequency=fs,
+            frame_length=frame_length,
+            frame_stride=frame_stride,
+            zero_padding=False)
+
+        if (numframes < 1):
+            raise ConfigurationError('Frame length is larger than your window size')
+
+        if (numframes > 500):
+            raise ConfigurationError('Number of frames is larger than 500 (' + str(numframes) + '), ' +
+                'increase your frame stride or decrease your window size.')
+
         # Example of pre-emphasizing.
         signal_preemphasized = speechpy.processing.preemphasis(signal, cof=pre_cof, shift=pre_shift)
 
         ############# Extract MFCC features #############
+        use_old_mels = True if implementation_version <= 3 else False
         mfcc = speechpy.feature.mfcc(signal_preemphasized, sampling_frequency=fs, implementation_version=implementation_version,
                     frame_length=frame_length,
                     frame_stride=frame_stride, num_filters=num_filters, fft_length=fft_length,
                     num_cepstral=num_cepstral,
-                    low_frequency=low_frequency, high_frequency=high_frequency)
+                    low_frequency=low_frequency, high_frequency=high_frequency,
+                    use_old_mels=use_old_mels)
         if win_size > 0:
             mfcc_cmvn = speechpy.processing.cmvnw(mfcc, win_size=win_size, variance_normalization=True)
         else:
@@ -69,12 +93,17 @@ def generate_features(implementation_version, draw_graphs, raw_data, axes, sampl
             # make visualization too
             fig, ax = plt.subplots()
             fig.set_size_inches(18.5, 20.5)
-            ax.set_axis_off()
-            mfcc_data= np.swapaxes(mfcc_cmvn, 0 ,1)
-            cax = ax.imshow(mfcc_data, interpolation='nearest', cmap=cm.coolwarm, origin='lower')
+            # swap to have time on long axis (x)
+            # flip so we go from low to high cepstrums
+            mfcc_data = np.swapaxes(np.flip(mfcc_cmvn, 1), 0 ,1)
+            graphing.set_x_axis_times(frame_stride, frame_length, np.shape(mfcc_data)[1])
+            height = np.shape(mfcc_data)[0]
+            y_pos = range(0,height)
+            y_nums = range(height,0,-1)
+            plt.yticks(y_pos,y_nums)
+            ax.imshow(mfcc_data, interpolation='nearest', cmap=cm.coolwarm)
 
             buf = io.BytesIO()
-
             plt.savefig(buf, format='svg', bbox_inches='tight', pad_inches=0)
 
             buf.seek(0)
@@ -101,6 +130,7 @@ def generate_features(implementation_version, draw_graphs, raw_data, axes, sampl
             }
         }
     }
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='MFCC script for audio data')

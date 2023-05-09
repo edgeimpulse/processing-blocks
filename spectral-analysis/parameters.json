@@ -1,15 +1,17 @@
 {
     "info": {
         "title": "Spectral Analysis",
-        "author": "EdgeImpulse Inc.",
+        "author": "Edge Impulse",
         "description": "Great for analyzing repetitive motion, such as data from accelerometers. Extracts the frequency and power characteristics of a signal over time.",
         "name": "Spectral features",
         "preferConvolution": false,
         "cppType": "spectral_analysis",
         "experimental": false,
-        "latestImplementationVersion": 2,
+        "latestImplementationVersion": 4,
         "visualization": "dimensionalityReduction",
-        "hasFeatureImportance": true
+        "hasFeatureImportance": true,
+        "hasAutoTune": true,
+        "minimumVersionForAutotune": 4
     },
     "parameters": [
         {
@@ -23,9 +25,19 @@
                     "param": "scale-axes"
                 },
                 {
+                    "name": "Input decimation ratio",
+                    "value": "1",
+                    "type": "select",
+                    "valid": [ "1", "3", "10", "30", "100", "1000" ],
+                    "help": "Decimate signal to improve effeciency",
+                    "param": "input-decimation-ratio",
+                    "showForImplementationVersion": [ 4 ],
+                    "configType": "int"
+                },
+                {
                     "name": "Type",
                     "value": "none",
-                    "help": "Type of filter to apply to the raw data",
+                    "help": "Type of filter to apply to the raw data. (Example: low is low pass)",
                     "type": "select",
                     "valid": [ "low", "high", "none" ],
                     "param": "filter-type"
@@ -57,14 +69,29 @@
             ]
         },
         {
-            "group": "Spectral power",
+            "group": "Analysis",
             "items": [
+                {
+                    "name": "Type",
+                    "value": "FFT",
+                    "help": "Type of spectral analysis to apply",
+                    "type": "select",
+                    "valid": [ "FFT", "Wavelet" ],
+                    "param": "analysis-type",
+                    "showForImplementationVersion": [ 3, 4 ],
+                    "createMacro": true
+                },
                 {
                     "name": "FFT length",
                     "value": 16,
                     "type": "int",
                     "help": "Number of FFT points",
-                    "param": "fft-length"
+                    "param": "fft-length",
+                    "showIf": {
+                        "parameter": "analysis-type",
+                        "operator": "eq",
+                        "value": "FFT"
+                    }
                 },
                 {
                     "name": "No. of peaks",
@@ -96,7 +123,12 @@
                     "type": "boolean",
                     "help": "Apply log base 10 to spectrum",
                     "param": "do-log",
-                    "showForImplementationVersion": [ 2 ]
+                    "showForImplementationVersion": [ 2, 3, 4 ],
+                    "showIf": {
+                        "parameter": "analysis-type",
+                        "operator": "eq",
+                        "value": "FFT"
+                    }
                 },
                 {
                     "name": "Overlap FFT frames?",
@@ -104,7 +136,52 @@
                     "type": "boolean",
                     "help": "When more than one FFT is needed to cover a window, then setting true will reuse the last half of the previous FFT frame. Similar to frame stride.",
                     "param": "do-fft-overlap",
-                    "showForImplementationVersion": [ 2 ]
+                    "showForImplementationVersion": [ 2, 3, 4 ],
+                    "showIf": {
+                        "parameter": "analysis-type",
+                        "operator": "eq",
+                        "value": "FFT"
+                    }
+                },
+                {
+                    "name": "Wavelet Decomposition Level",
+                    "value": 1,
+                    "type": "int",
+                    "help": "Decomposition level (must be >= 0)",
+                    "param": "wavelet-level",
+                    "showForImplementationVersion": [ 3, 4 ],
+                    "showIf": {
+                        "parameter": "analysis-type",
+                        "operator": "eq",
+                        "value": "Wavelet"
+                    }
+                },
+                {
+                    "name": "Wavelet",
+                    "value": "db4",
+                    "type": "select",
+                    "help": "Wavelet to use",
+                    "valid": ["bior1.3", "bior1.5", "bior2.2", "bior2.4", "bior2.6", "bior2.8", "bior3.1", "bior3.3", "bior3.5", "bior3.7", "bior3.9", "bior4.4", "bior5.5", "bior6.8", "coif1", "coif2", "coif3", "db2", "db3", "db4", "db5", "db6", "db7", "db8", "db9", "db10", "haar", "rbio1.3", "rbio1.5", "rbio2.2", "rbio2.4", "rbio2.6", "rbio2.8", "rbio3.1", "rbio3.3", "rbio3.5", "rbio3.7", "rbio3.9", "rbio4.4", "rbio5.5", "rbio6.8", "sym2", "sym3", "sym4", "sym5", "sym6", "sym7", "sym8", "sym9", "sym10"],
+                    "param": "wavelet",
+                    "showForImplementationVersion": [ 3, 4 ],
+                    "showIf": {
+                        "parameter": "analysis-type",
+                        "operator": "eq",
+                        "value": "Wavelet"
+                    }
+                },
+                {
+                    "name": "Improve low frequency resolution?",
+                    "value": false,
+                    "type": "boolean",
+                    "help": "Decimate signal to improve low frequency resolution",
+                    "param": "extra-low-freq",
+                    "showForImplementationVersion": [ 4 ],
+                    "showIf": {
+                        "parameter": "analysis-type",
+                        "operator": "eq",
+                        "value": "FFT"
+                    }
                 }
             ]
         }

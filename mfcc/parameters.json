@@ -1,7 +1,7 @@
 {
     "info": {
         "title": "Audio (MFCC)",
-        "author": "EdgeImpulse Inc.",
+        "author": "Edge Impulse",
         "description": "Extracts features from audio signals using Mel Frequency Cepstral Coefficients, great for human voice.",
         "name": "MFCC",
         "preferConvolution": true,
@@ -10,7 +10,8 @@
         "cppType": "mfcc",
         "visualization": "dimensionalityReduction",
         "experimental": false,
-        "latestImplementationVersion": 3
+        "hasAutoTune": true,
+        "latestImplementationVersion": 4
     },
     "parameters": [
         {
@@ -60,7 +61,7 @@
                 },
                 {
                     "name": "Low frequency",
-                    "value": 300,
+                    "value": 0,
                     "type": "int",
                     "help": "Lowest band edge of mel filters (in Hz)",
                     "param": "low_frequency"

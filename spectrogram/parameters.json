@@ -2,7 +2,7 @@
     "version": 1,
     "info": {
         "title": "Spectrogram",
-        "author": "EdgeImpulse Inc.",
+        "author": "Edge Impulse",
         "description": "Extracts a spectrogram from audio or sensor data, great for non-voice audio or data with continuous frequencies.",
         "name": "Spectrogram",
         "preferConvolution": true,
@@ -11,7 +11,8 @@
         "cppType": "spectrogram",
         "visualization": "dimensionalityReduction",
         "experimental": false,
-        "latestImplementationVersion": 3
+        "latestImplementationVersion": 3,
+        "hasAutoTune": true
     },
     "parameters": [
         {
@@ -47,21 +48,17 @@
                     "name": "Noise floor (dB)",
                     "value": -52,
                     "type": "int",
-                    "help": "Everything less loud than the noise floor will be dropped",
+                    "help": "When the spectrogram is rescaled, all frequency bins below this noise floor will be clipped to zero",
                     "param": "noise_floor_db",
                     "showForImplementationVersion": [ 3 ]
-                }
-            ]
         },
         {
-            "group": "Graph options",
-            "items": [
-                {
                     "name": "Show axes",
                     "value": true,
                     "type": "boolean",
                     "help": "Show frequency / time axes in the graphs",
-                    "param": "show_axes"
+                    "param": "show_axes",
+                    "showForImplementationVersion": []
                 }
             ]
         }
