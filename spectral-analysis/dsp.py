@@ -92,7 +92,7 @@ def find_peaks_in_fft(sampling_freq, x, threshold, count):
     # find and draw all peaks on the graph
     peaks_x = peakutils.indexes(vx, thres=0)
     for p in peaks_x:
-        if (x[p] < threshold):
+        if (vx[p] < threshold):
             continue
         px.append([ freq_space[p], vx[p] ])
 
