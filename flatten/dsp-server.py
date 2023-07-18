@@ -9,8 +9,7 @@ from urllib.parse import urlparse, parse_qs
 import traceback
 import logging
 import numpy as np
-import jax.numpy as jnp
-from dsp import generate_features, get_tflite_implementation
+from dsp import generate_features
 
 def get_params(self):
     with open('parameters.json', 'r') as f:
@@ -39,8 +38,6 @@ def single_req(self, fn, body):
 
     processed = fn(**args)
     if (isinstance(processed['features'], np.ndarray)):
-        processed['features'] = processed['features'].flatten().tolist()
-    if (isinstance(processed['features'], jnp.ndarray)):
         processed['features'] = processed['features'].flatten().tolist()
 
     body = json.dumps(processed)
@@ -78,8 +75,6 @@ def batch_req(self, fn, body):
         args['raw_data'] = np.array(example)
         f = fn(**args)
         if (isinstance(f['features'], np.ndarray)):
-            features.append(f['features'].flatten().tolist())
-        elif (isinstance(f['features'], jnp.ndarray)):
             features.append(f['features'].flatten().tolist())
         else:
             features.append(f['features'])
@@ -167,19 +162,6 @@ class Handler(BaseHTTPRequestHandler):
                 post_body = self.rfile.read(content_len)
                 body = json.loads(post_body.decode('utf-8'))
                 batch_req(self, generate_features, body)
-
-            elif (url.path == '/tflite-impl'):
-                try:
-                    content_len = int(self.headers.get('Content-Length'))
-                    post_body = self.rfile.read(content_len)
-                    body = json.loads(post_body.decode('utf-8'))
-                    tflite_req(self, get_tflite_implementation, body)
-                except Exception as e:
-                    print('Failed to handle request', e, traceback.format_exc())
-                    self.send_response(500)
-                    self.send_header('Content-Type', 'text/plain')
-                    self.end_headers()
-                    self.wfile.write(str(e).encode())
 
             else:
                 self.send_response(404)
