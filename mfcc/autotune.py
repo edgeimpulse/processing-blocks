@@ -49,11 +49,13 @@ def autotune_params(data, options):
         },
         {
             'key': 'num_filters',
-            'value': 32 # Want to pick a power of 2 so we don't force kissFFT into the binary
+            # min func makes sure there's at least some averaging of bins
+            'value': min(32, fft_length // 4) # Want to pick a power of 2 so we don't force kissFFT into the binary
         },
         {
+            # Don't propose an FFT smaller than 8
             'key': 'fft_length',
-            'value': fft_length
+            'value': max(8,fft_length)
         },
         {
             'key': 'low_frequency',

@@ -30,6 +30,13 @@ from scipy.fftpack import dct
 from . import functions
 from scipy import signal as sn
 
+import pathlib, sys
+
+ROOT = pathlib.Path(__file__).parent
+sys.path.append(str(ROOT / '..' / '..'))
+
+from common.errors import ConfigurationError
+
 def filterbanks(
         num_filter,
         coefficients,
@@ -110,6 +117,12 @@ def filterbanks(
                                                         middle=middle,
                                                         right=right)
 
+    # Check if any row in the array contains all zeros
+    if np.any(np.all(filterbank == 0, axis=1)):
+
+        raise ConfigurationError('At least one row of the mel filterbank contains all zeros. ' +
+        f'Suggest lowering filter number to {np.floor(coefficients/4)}, or increasing the FFT length.')
+
     return filterbank, hertz[1:-1]
 
 
@@ -152,7 +165,7 @@ def mfcc(
     Returns:
         array: A numpy array of size (num_frames x num_cepstral) containing mfcc features.
     """
-    feature, energy, _ = mfe(signal, implementation_version=implementation_version,
+    feature, energy, _, _ = mfe(signal, implementation_version=implementation_version,
                           sampling_frequency=sampling_frequency,
                           frame_length=frame_length, frame_stride=frame_stride,
                           num_filters=num_filters, fft_length=fft_length,
@@ -237,7 +250,7 @@ def mfe(signal, sampling_frequency, implementation_version, frame_length=0.020, 
     features = np.dot(power_spectrum, filter_banks.T)
     features = functions.zero_handling(features)
 
-    return features, frame_energies, filter_freqs
+    return features, frame_energies, filter_freqs, filter_banks
 
 
 def lmfe(signal, sampling_frequency, implementation_version, frame_length=0.020, frame_stride=0.01,
@@ -266,7 +279,7 @@ def lmfe(signal, sampling_frequency, implementation_version, frame_length=0.020,
               array: Features - The log energy of fiterbank of size num_frames x num_filters frame_log_energies. The log energy of each frame num_frames x 1
     """
 
-    feature, frame_energies, _ = mfe(signal,
+    feature, frame_energies, _, _ = mfe(signal,
                                   implementation_version=implementation_version,
                                   sampling_frequency=sampling_frequency,
                                   frame_length=frame_length,

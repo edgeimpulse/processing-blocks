@@ -3,6 +3,7 @@ import json
 import sys
 import os
 import numpy as np
+from scipy import fft
 
 sys.path.append('/')
 import common.spectrum
@@ -38,6 +39,12 @@ def autotune_params(data, options):
 
     fft_length, num_filters = common.spectrum.audio_set_params(frame_length, data.fs)
 
+    # Don't let FFT size get too small
+    fft_length = max(8,fft_length)
+
+    # Make sure we're getting a least some bin averaging
+    num_filters = min(num_filters, fft_length // 4)
+
     for x, _, _ in data:
         x = x if x.ndim == 1 else x[:, 0]
         padding = data.max_len - x.shape[0]
@@ -46,7 +53,7 @@ def autotune_params(data, options):
 
         x = (x / 2**15).astype(np.float32)
         x = speechpy.processing.preemphasis(x, cof=0.98, shift=1)
-        mfe, _, _ = speechpy.feature.mfe(x, sampling_frequency=data.fs, implementation_version=implementation_version,
+        mfe, _, _, _ = speechpy.feature.mfe(x, sampling_frequency=data.fs, implementation_version=implementation_version,
                                         frame_length=frame_length,
                                         frame_stride=frame_stride, num_filters=num_filters, fft_length=fft_length,
                                         low_frequency=low_frequency, high_frequency=None)

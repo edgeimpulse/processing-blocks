@@ -398,7 +398,8 @@ def find_best_wavelet(dataset, sample_size=100, window_size_ms=None):
     level = int(np.log2(min_len)) - 6 # empirical
     level = min(level, 7)
     if level < 1:
-        print(f'Window size too small to use wavelets. Window should be at least 128 samples long. (Current window is {min_len} samples).')
+        min_len_ms = np.ceil(128 * interval_ms).astype(int)
+        print(f'INFO: Skipping wavelets. Window should be at least {min_len_ms} ms or 128 samples for wavelets. Only considering FFT options.')
         raise ConfigurationError('Too few samples to use wavelet')
 
     data = {}

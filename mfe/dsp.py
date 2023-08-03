@@ -73,7 +73,7 @@ def generate_features(implementation_version, draw_graphs, raw_data, axes, sampl
                 'increase your frame stride or decrease your window size.')
         ############# Extract MFCC features #############
         use_old_mels = True if implementation_version <= 3 else False
-        mfe, _, filterbank_freqs = speechpy.feature.mfe(signal, sampling_frequency=fs, implementation_version=implementation_version,
+        mfe, _, filterbank_freqs, filterbank_matrix = speechpy.feature.mfe(signal, sampling_frequency=fs, implementation_version=implementation_version,
                                            frame_length=frame_length,
                                            frame_stride=frame_stride, num_filters=num_filters, fft_length=fft_length,
                                            low_frequency=low_frequency, high_frequency=high_frequency,
@@ -120,9 +120,18 @@ def generate_features(implementation_version, draw_graphs, raw_data, axes, sampl
             image = graphing.create_mfe_graph(
                 sampling_freq, frame_length, frame_stride, width, height, np.swapaxes(mfe_2d, 0, 1), filterbank_freqs)
 
+            image2 = graphing.create_graph(filterbank_matrix, "Output Row Index", "FFT Bin Index")
+
             graphs.append({
-                'name': 'Mel Filterbank Energies',
+                'name': 'Mel Energies (DSP Output)',
                 'image': image,
+                'imageMimeType': 'image/svg+xml',
+                'type': 'image'
+            })
+
+            graphs.append({
+                'name': 'FFT Bin Weighting',
+                'image': image2,
                 'imageMimeType': 'image/svg+xml',
                 'type': 'image'
             })

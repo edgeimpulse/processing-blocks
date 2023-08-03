@@ -36,3 +36,19 @@ def create_mfe_graph(sampling_freq, frame_length, frame_stride, width, height, p
     # Trim down the frequency list for a y axis labels
     freqs = [freqs[0], *freqs[1:-1:4], freqs[-1]]
     return create_sgram_graph(sampling_freq, frame_length, frame_stride, width, height, power_spectrum, freqs)
+
+
+def create_graph(matrix, y_label, x_label):
+    matplotlib.use('Svg')
+    _, ax = plt.subplots()
+    plt.ylabel(y_label)
+    plt.xlabel(x_label)
+    im = ax.imshow(matrix, interpolation='nearest',
+              cmap=matplotlib.cm.coolwarm, origin='lower')
+    cbar = plt.colorbar(im, orientation='horizontal', pad=0.2)
+    buf = io.BytesIO()
+    plt.savefig(buf, format='svg', bbox_inches='tight', pad_inches=0)
+    buf.seek(0)
+    image = (base64.b64encode(buf.getvalue()).decode('ascii'))
+    buf.close()
+    return image
