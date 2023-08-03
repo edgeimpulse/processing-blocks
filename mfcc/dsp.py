@@ -11,6 +11,7 @@ import math
 import pathlib
 ROOT = pathlib.Path(__file__).parent
 sys.path.append(str(ROOT / '..'))
+sys.path.append(str(object=ROOT ))
 from common.errors import ConfigurationError
 from common import graphing
 
