@@ -8,7 +8,7 @@
         "preferConvolution": true,
         "convolutionColumns": "fft_length",
         "convolutionKernelSize": 5,
-        "cppType": "spectrogram",
+        "cppType": "spectrogram_custom",
         "visualization": "dimensionalityReduction",
         "experimental": false,
         "latestImplementationVersion": 3,

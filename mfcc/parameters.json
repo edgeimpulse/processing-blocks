@@ -7,7 +7,7 @@
         "preferConvolution": true,
         "convolutionColumns": "num_cepstral",
         "convolutionKernelSize": 5,
-        "cppType": "mfcc",
+        "cppType": "mfcc_custom",
         "visualization": "dimensionalityReduction",
         "experimental": false,
         "hasAutoTune": true,

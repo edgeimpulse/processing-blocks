@@ -8,7 +8,7 @@
         "preferConvolution": true,
         "convolutionColumns": "num_filters",
         "convolutionKernelSize": 5,
-        "cppType": "mfe",
+        "cppType": "mfe_custom",
         "visualization": "dimensionalityReduction",
         "experimental": false,
         "latestImplementationVersion": 4,

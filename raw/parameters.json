@@ -7,7 +7,7 @@
         "preferConvolution": true,
         "convolutionColumns": "axes",
         "convolutionKernelSize": 7,
-        "cppType": "raw",
+        "cppType": "raw_custom",
         "visualization": "dimensionalityReduction",
         "experimental": false,
         "hasFeatureImportance": true,
