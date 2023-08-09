@@ -1,0 +1,47 @@
+name: Python application
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Remove unnecessary files
+      run: |
+        sudo rm -rf /usr/share/dotnet
+        sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+    - uses: actions/checkout@v3
+    - name: Set up Python
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.9"
+    - name: Cache Python
+      id: cache-python
+      uses: actions/cache/restore@v3
+      with:
+        path: ${{ env.pythonLocation }}
+        key: ${{ env.pythonLocation }}-${{ hashFiles('requirements.txt') }}
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        cd raw
+        pip install -r requirements-blocks.txt
+    - name: Cache Python
+      if: steps.cache-python.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v3
+      with:
+        path: ${{ env.pythonLocation }}
+        key: ${{ steps.cache-python.outputs.cache-primary-key }}
+
+    - name: Smoke test - dsp-server runs
+      run: |
+        cd raw
+        python dsp-server.py
