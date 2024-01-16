@@ -11,7 +11,7 @@
         "cppType": "spectrogram_custom",
         "visualization": "dimensionalityReduction",
         "experimental": false,
-        "latestImplementationVersion": 3,
+        "latestImplementationVersion": 4,
         "hasAutoTune": true
     },
     "parameters": [
@@ -50,7 +50,7 @@
                     "type": "int",
                     "help": "When the spectrogram is rescaled, all frequency bins below this noise floor will be clipped to zero",
                     "param": "noise_floor_db",
-                    "showForImplementationVersion": [ 3 ]
+                    "showForImplementationVersion": [ 3, 4 ]
         },
         {
                     "name": "Show axes",

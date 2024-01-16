@@ -25,15 +25,19 @@ spec.loader.exec_module(speechpy)
 def generate_features(implementation_version, draw_graphs, raw_data, axes, sampling_freq,
                       frame_length, frame_stride, fft_length,
                       show_axes, noise_floor_db):
-    if (implementation_version != 1 and implementation_version != 2 and implementation_version != 3):
-        raise ConfigurationError('implementation_version should be 1, 2 or 3')
-
+    if (implementation_version >4):
+        raise ConfigurationError('implementation_version should be <= 4')
     if (not math.log2(fft_length).is_integer()):
         raise ConfigurationError('FFT length must be a power of 2')
-
     if (len(axes) != 1):
         raise ConfigurationError('Spectrogram blocks only support a single axis, ' +
             'create one spectrogram block per axis under **Create impulse**')
+    if (len(raw_data) < 1):
+        raise ConfigurationError('Input data must not be empty')
+    if (frame_length < 4/sampling_freq):
+        raise ConfigurationError('Frame length should be at least 4 samples')
+    if (frame_stride < 4/sampling_freq):
+        raise ConfigurationError('Frame stride should be at least 4 samples')
 
     fs = sampling_freq
 
@@ -49,8 +53,8 @@ def generate_features(implementation_version, draw_graphs, raw_data, axes, sampl
     for ax in range(0, len(axes)):
         signal = raw_data[:,ax]
 
-        if implementation_version >= 3:
-            # Rescale to [-1, 1] and add preemphasis
+        if implementation_version == 3:
+            # Rescale to [-1, 1]
             if np.any((signal < -1) | (signal > 1)):
                 signal = (signal / 2**15).astype(np.float32)
 
@@ -95,7 +99,8 @@ def generate_features(implementation_version, draw_graphs, raw_data, axes, sampl
             power_spectrum = 10 * np.log10(power_spectrum)
 
             power_spectrum = (power_spectrum - noise_floor_db) / ((-1 * noise_floor_db) + 12)
-            power_spectrum = np.clip(power_spectrum, 0, 1)
+            max_clip = 1 if implementation_version == 3 else None
+            power_spectrum = np.clip(power_spectrum, 0, max_clip)
 
         flattened = power_spectrum.flatten()
         features = np.concatenate((features, flattened))
