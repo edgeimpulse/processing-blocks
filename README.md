@@ -1,6 +1,6 @@
 # Edge Impulse processing blocks
 
-These are officially supported processing blocks in Edge Impulse. These blocks can be selected from any project, and can be used as inspiration for [Building custom processing blocks](https://docs.edgeimpulse.com/docs/custom-blocks). These blocks are meant to be ran on a server. The corresponding C++ blocks are in the [C++ inferencing SDK](https://github.com/edgeimpulse/inferencing-sdk-cpp).
+These are officially supported processing blocks in Edge Impulse. These blocks can be selected from any project, and can be used as inspiration for [Building custom processing blocks](https://docs.edgeimpulse.com/docs/custom-blocks). These blocks are meant to be ran on a server. The corresponding C++ blocks are in the [C++ inferencing SDK](https://github.com/edgeimpulse/inferencing-sdk-cpp), or can be found in the edge-impulse-sdk folder of the zip exported from Studio.
 
 ## Contributing to this repository
 
