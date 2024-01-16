@@ -10,16 +10,7 @@ sys.path.append(str(ROOT / '..'))
 sys.path.append(str(object=ROOT ))
 from common import graphing
 from common.errors import ConfigurationError
-
-# Load our SpeechPy fork
-MODULE_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'third_party', 'speechpy', '__init__.py')
-MODULE_NAME = 'speechpy'
-import importlib
-import sys
-spec = importlib.util.spec_from_file_location(MODULE_NAME, MODULE_PATH)
-speechpy = importlib.util.module_from_spec(spec)
-sys.modules[spec.name] = speechpy
-spec.loader.exec_module(speechpy)
+from third_party import speechpy
 
 
 def generate_features(implementation_version, draw_graphs, raw_data, axes, sampling_freq,
