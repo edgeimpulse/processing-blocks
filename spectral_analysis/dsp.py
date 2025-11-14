@@ -15,7 +15,7 @@ sys.path.append('/')
 from common.spectrum import welch_max_hold, zero_handling
 
 ROOT = pathlib.Path(__file__).parent
-sys.path.append(str(ROOT / '..'))
+sys.path.append(str(object=ROOT ))
 from common.errors import ConfigurationError
 from common.wavelet import dwt_features, get_max_level, get_min_length, get_wavefunc
 from common.sampling import decimate_simple, get_ratio_combo
