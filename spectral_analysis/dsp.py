@@ -16,7 +16,6 @@ from common.spectrum import welch_max_hold, zero_handling
 
 ROOT = pathlib.Path(__file__).parent
 sys.path.append(str(ROOT / '..'))
-sys.path.append(str(object=ROOT ))
 from common.errors import ConfigurationError
 from common.wavelet import dwt_features, get_max_level, get_min_length, get_wavefunc
 from common.sampling import decimate_simple, get_ratio_combo
@@ -93,7 +92,7 @@ def find_peaks_in_fft(sampling_freq, x, threshold, count):
     # find and draw all peaks on the graph
     peaks_x = peakutils.indexes(vx, thres=0)
     for p in peaks_x:
-        if (x[p] < threshold):
+        if (vx[p] < threshold):
             continue
         px.append([ freq_space[p], vx[p] ])
 
@@ -199,20 +198,31 @@ def extract_spec_features(fx, sampling_freq, fft_length, filter_type, filter_cut
     fft_band_labels = []
 
     # Optimization: since we subtract the mean at the begining, bin 0 (DC) will always be ~0, so skip it
-    for i in range(1, len(freqs)):
-        # low-pass filter? skip everything > cutoff
-        if (filter_type == 'low' and freqs[i] - freq_spacing/2 > filter_cutoff):
-            break  # no more interesting bins
-        # high-pass filter? skip everything < cutoff
-        if (filter_type == 'high' and freqs[i] + freq_spacing/2 < filter_cutoff):
-            continue
+    # we want to find n such that fcutoff < sample_f / fft * n ( or > for high pass )
+    # also, + - half bin width (sample_f/(fft*2)) for high / low pass
+    if filter_cutoff > sampling_freq / 2:
+        filter_cutoff = sampling_freq / 2
 
+    bin_val = filter_cutoff * fft_length / sampling_freq
+
+    if filter_type == 'high':
+        start_bin = int(bin_val - 0.5) + 1  # add one b/c we want to always round up
+        # don't use the DC bin b/c it's zero
+        start_bin = 1 if start_bin == 0 else start_bin
+        stop_bin = fft_length // 2 + 1  # go one past
+    elif filter_type == 'low':
+        start_bin = 1
+        stop_bin = int(bin_val + 0.5) + 1  # go one past
+    else:
+        start_bin = 1
+        stop_bin = fft_length // 2 + 1
+
+    for i in range(start_bin, stop_bin):
         features.append(spec_powers[i])
 
         band_from = str(round(freqs[i] - freq_spacing/2, 2))
         band_to = str(round(freqs[i] + freq_spacing/2, 2))
-        fft_band_labels.append(
-                               'Spectral Power ' + band_from + ' - ' + band_to + ' Hz')
+        fft_band_labels.append('Spectral Power ' + band_from + ' - ' + band_to + ' Hz')
 
     if not fft_band_labels:
         raise ConfigurationError("Cutoff frequency masked all FFT bins.")
@@ -231,6 +241,9 @@ def generate_features(implementation_version, draw_graphs, raw_data, axes, sampl
 
     if (not math.log2(fft_length).is_integer()):
         raise ConfigurationError('FFT length must be a power of 2')
+
+    if (len(raw_data) < 1):
+        raise ConfigurationError('Input data must not be empty')
 
     # reshape first
     raw_data = raw_data.reshape(int(len(raw_data) / len(axes)), len(axes))
